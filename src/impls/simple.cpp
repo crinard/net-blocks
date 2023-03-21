@@ -52,6 +52,7 @@ static void generate_send(void) {
 static void run_ingress_step_wrapper(builder::dyn_var<void*> p, builder::dyn_var<int> len) {
 	interface_module::instance.run_ingress_step(p, len);
 }
+
 static void generate_ingress_step(void) {
 	auto ast = builder::builder_context().extract_function_ast(run_ingress_step_wrapper, "nb__run_ingress_step");
 	block::eliminate_redundant_vars(ast);
