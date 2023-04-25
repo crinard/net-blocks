@@ -108,12 +108,16 @@ $(BUILD_DIR)/runtime/nb_timer.o: $(RUNTIME_DIR)/nb_timer.c $(RUNTIME_INCLUDES)
 $(BUILD_DIR)/runtime/nb_mlx5_transport.o: $(RUNTIME_DIR)/nb_mlx5_transport.cc $(RUNTIME_INCLUDES)
 	$(CXX) $(RCFLAGS) -c $(RUNTIME_DIR)/nb_mlx5_transport.cc -o $(BUILD_DIR)/runtime/nb_mlx5_transport.o -I $(RUNTIME_DIR)/mlx5_impl/ -I $(SCRATCH_DIR) -I $(RUNTIME_DIR)
 
+$(BUILD_DIR)/runtime/nb_desert_transport.o: $(RUNTIME_DIR)/nb_desert_transport.cc $(RUNTIME_INCLUDES)
+	$(CXX) $(RCFLAGS) -c $(RUNTIME_DIR)/nb_desert_transport.cc -o $(BUILD_DIR)/runtime/nb_desert_transport.o -I $(RUNTIME_DIR)/desert_impl/ -I $(SCRATCH_DIR) -I $(RUNTIME_DIR)
+
 .PRECIOUS: $(BUILD_DIR)/runtime/mlx5_impl/%.o
 $(BUILD_DIR)/runtime/mlx5_impl/%.o: $(RUNTIME_DIR)/mlx5_impl/%.cc $(wildcard $(RUNTIME_DIR)/mlx5_impl/*)
 	$(CXX) $(RCFLAGS) $< -o $@ -c -I $(RUNTIME_DIR)/mlx5_impl/ -I $(SCRATCH_DIR)
 
 mlx5_runtime: $(BUILD_DIR)/runtime/nb_mlx5_transport.o $(BUILD_DIR)/runtime/mlx5_impl/transport.o $(BUILD_DIR)/runtime/mlx5_impl/halloc.o
 	
+desert_runtime: $(BUILD_DIR)/runtime/nb_desert_transport.o
 
 SIMPLE_RUNTIME_OBJS=$(BUILD_DIR)/runtime/nb_runtime_simple.o $(BUILD_DIR)/runtime/nb_simple.o $(BUILD_DIR)/runtime/nb_timer.o
 
