@@ -34,7 +34,26 @@ nb__connection_t* nb__retrieve_connection(unsigned sa);
 void nb__debug_packet(char* p);
 
 
-// Network interface API
+// Network interface API TODO: implement these -- they have to interface with the 
+// bottom of the stack. 
+// The top (application layer is written using the code (like follows)), and the 
+// application will have the netblocks implementations.
+/**
+ * nb__ipc_init("/tmp/ipc_socket", 0);
+	printf("IPC initialized\n");
+	nb__net_init();
+	memcpy(nb__my_host_id, client_id, 6);
+
+	nb__connection_t * conn = nb__establish(server_id, 8080, 8081, callback);
+	
+	nb__send(conn, CLIENT_MSG, sizeof(CLIENT_MSG));
+
+	while (running) {
+		nb__main_loop_step();
+		usleep(100 * 1000);
+	}
+	nb__destablish(conn);
+ */
 char* nb__poll_packet(int*, int);
 int nb__send_packet(char*, int);
 void nb__ipc_init(const char* sock_path, int mode);
@@ -55,13 +74,7 @@ void nb__reliable_redelivery_timer_cb(nb__timer*, void* param, unsigned long lon
 // Runtime API
 int nb__read(nb__connection_t*, char*, int);
 nb__connection_t* nb__accept(nb__connection_t*, void (*)(int, nb__connection_t*));
-
 void nb__main_loop_step(void);
-
-
-
-
-
 
 extern char nb__reuse_mtu_buffer[];
 extern char nb__my_host_id[];

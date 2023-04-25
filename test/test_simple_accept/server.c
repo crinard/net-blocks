@@ -10,7 +10,7 @@ char server_id[] = {0, 0, 0, 0, 0, 1};
 int running = 1;
 static void callback(int event, nb__connection_t * c) {
 	if (event == QUEUE_EVENT_ACCEPT_READY) {
-		// Share the callback function
+		// Share the callback function -- only event_accedt will fire with 2 tuple (wildcards) not 4 tuple.
 		nb__connection_t * s = nb__accept(c, callback);
 	} else if (event == QUEUE_EVENT_READ_READY) {	
 		char buff[65];
@@ -27,9 +27,9 @@ int main(int argc, char* argv[]) {
 	printf("IPC initialized\n");
 	nb__net_init();
 	memcpy(nb__my_host_id, server_id, 6);
-
+	// This specifies server id, etc. Sets netblockds identifier. Like ifconfig, setting address. We're looking for which "wire" to send on. For CSMA, we're creating a proxy, and specify headers in init function. 
 	nb__connection_t * conn = nb__establish(nb__wildcard_host_identifier, 0, 8080, callback);
-
+	// Every connection identified by 4 tuple, wildcard host identifier is used to listen on all interfaces, 0 is used to listen on any port, always sends on 8080, calls callback when new packet shows up. 
 	while (running) {
 		nb__main_loop_step();
 		usleep(100 * 1000);

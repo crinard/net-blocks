@@ -6,7 +6,7 @@
 // Should be the same as the defines 
 // in runtime/nb_runtime.h
 #define QUEUE_EVENT_ESTABLISHED (0)
-#define QUEUE_EVENT_READ_READY (1)
+#define QUEUE_EVENT_READ_READY (1) // Packet that's ready to be recieved
 #define QUEUE_EVENT_ACCEPT_READY (2)
 
 namespace net_blocks {

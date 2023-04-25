@@ -128,6 +128,7 @@ simple_network_test: mlx5_runtime $(SIMPLE_RUNTIME_OBJS)
 	
 .PHONY: simple_test
 simple_test: executables $(SIMPLE_RUNTIME_OBJS)
+# Links the simple stack -- src/nb_runtime.c and src/nb_simple.c
 	$(CC) $(RCFLAGS) -c $(TEST_DIR)/test_simple/server.c -o $(BUILD_DIR)/test/simple_test/server.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
 	$(CC) $(RCFLAGS) -c $(TEST_DIR)/test_simple/client.c -o $(BUILD_DIR)/test/simple_test/client.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
 	$(CC) $(RCFLAGS) -c $(RUNTIME_DIR)/nb_ipc_transport.c -o $(BUILD_DIR)/runtime/nb_ipc_transport.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
