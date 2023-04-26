@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <iostream>
+
 #include <packet.h>
 #include <module.h>
 
@@ -43,7 +45,14 @@ char nb__reuse_mtu_buffer[DESERT_MTU];
 char* nb__poll_packet(int* size, int headroom) {
 	int len;
 	static char temp_buf[DESERT_MTU];
-	std::vector<Packet*> readbuf = m->getNBReadBuffer();
+	// std::vector<Packet*> readbuf = m->getNBReadBuffer();
+	//TODO: Replace w/ real code
+
+	Packet p_fake = Packet();
+
+	std::vector<Packet*> readbuf;
+	readbuf.push_back(&p_fake);
+
 	*size = 0;//TODO: Should assert?
 	char ** ret = (char**) malloc(sizeof(char*) * readbuf.size());
 	for (int i = 0; i < readbuf.size(); i++) {
@@ -70,6 +79,7 @@ char* nb__poll_packet(int* size, int headroom) {
  * @return int 0 or 1 always
  */
 int nb__send_packet(char* buff, int len) {
+	std::cout << "nb__send_packet" << std::endl;
 	// Don't try to out of order if we already have on pending
 	if (out_of_order_len == 0 && nb__desert_simulate_out_of_order) {
 		int r = rand() % OUT_OF_ORDER_CHANCE;

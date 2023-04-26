@@ -4,7 +4,7 @@
 #include <time.h>
 
 struct data_queue_t* nb__new_data_queue(void) {
-	struct data_queue_t * q = malloc(sizeof(struct data_queue_t));
+	struct data_queue_t * q = (data_queue_t*) malloc(sizeof(struct data_queue_t));
 	q->current_elems = 0;
 	return q;
 }
@@ -19,7 +19,7 @@ void nb__insert_data_queue(struct data_queue_t* q, char* buff, int len) {
 }
 
 nb__accept_queue_t* nb__new_accept_queue(void) {
-	nb__accept_queue_t* q = malloc(sizeof(*q));
+	nb__accept_queue_t* q = (nb__accept_queue_t*)malloc(sizeof(*q));
 	q->current_elems = 0;
 	return q;
 }
