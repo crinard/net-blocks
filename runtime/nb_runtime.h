@@ -2,8 +2,9 @@
 #define NB_RUNTIME_H
 #include <stdlib.h>
 #include <string.h>
-#include "gen_headers.h"
+#include "/home/chris/Desktop/DESERT_Underwater/DESERT_Framework/DESERT/network/nb_p/net-blocks/scratch/gen_headers.h"
 #include "nb_timer.h"
+
 #ifdef __cplusplus 
 extern "C" {
 #endif
@@ -60,8 +61,9 @@ void nb__ipc_init(const char* sock_path, int mode);
 void nb__ipc_deinit();
 void nb__mlx5_init(void);
 char* nb__request_send_buffer(void);
-void* nb__return_send_buffer(char*);
-
+void nb__return_send_buffer(char*);
+void nb__desert_init(void* _m);
+void nb__desert_deinit(void);
 
 // Generated protocol API
 void nb__run_ingress_step (void*, int);
