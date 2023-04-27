@@ -114,6 +114,6 @@ int nb__send_packet(char* buff, int len) {
 char* nb__request_send_buffer(void) {
 	return malloc(IPC_MTU);
 }
-void* nb__return_send_buffer(char* p) {
+void nb__return_send_buffer(char* p) {
 	free(p);
 }

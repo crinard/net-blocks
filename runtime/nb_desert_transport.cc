@@ -8,8 +8,8 @@
 #include <errno.h>
 #include <iostream>
 
-#include <packet.h>
-#include <module.h>
+#include "packet.h"
+#include "module.h"
 
 #include "nb_p.h"
 
