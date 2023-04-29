@@ -1,5 +1,6 @@
 #include "nb_timer.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 nb__timer nb__allocated_timers[MAX_TIMER_ALLOCS];
 nb__timer* nb__timer_free_list = NULL;
@@ -48,16 +49,23 @@ void nb__remove_timer(nb__timer* t) {
 static unsigned long long nb__last_timer_checked;
 extern unsigned long long nb__get_time_ms_now(void);
 void nb__init_timers(void) {
+	fprintf(stderr, "Initializing timers\n");
 	nb__timer_free_list = &nb__allocated_timers[0];
+	fprintf(stderr, "Initializing timers ln 54\n");
 	for (int i = 0; i < MAX_TIMER_ALLOCS - 1; i++) {
+		fprintf(stderr, "Initializing timers loop i = %i\n", i);
 		nb__allocated_timers[i].next = &nb__allocated_timers[i+1];
 	}
+	fprintf(stderr, "Initializing timers past loop\n");
 	nb__allocated_timers[MAX_TIMER_ALLOCS-1].next = NULL;
-	
+	fprintf(stderr, "Initializing timers past nb__allocated_timers\n");
 	for (int i = 0; i < MAX_TIMER_SLOTS; i++) {
 		nb__timer_slots[i] = NULL;
+		fprintf(stderr, "Initializing timers second loop i = %i\n", i);
 	}
+	fprintf(stderr, "Initializing timers last\n");
 	nb__last_timer_checked = nb__get_time_ms_now();
+	fprintf(stderr, "Initializing timers done\n");
 }
 
 

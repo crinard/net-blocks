@@ -47,9 +47,9 @@ endif
 
 
 ifeq ($(DEBUG),1)
-RCFLAGS=-g
+RCFLAGS=-g -fPIC #-fsanitize=address
 else
-RCFLAGS=-O3
+RCFLAGS=-O3 -fPIC #-fsanitize=address
 endif
 
 
@@ -94,11 +94,11 @@ $(BUILD_DIR)/impls/simple: $(BUILD_DIR)/impls/simple.o $(LIBRARY)
 $(SCRATCH_DIR)/nb_simple.c: $(BUILD_DIR)/impls/simple
 	$(BUILD_DIR)/impls/simple $(SCRATCH_DIR)/gen_headers.h > $(SCRATCH_DIR)/nb_simple.c
 
-$(BUILD_DIR)/runtime/nb_simple.o: $(SCRATCH_DIR)/nb_simple.c $(RUNTIME_INCLUDES)
+$(BUILD_DIR)/runtime/nb_simple.o: $(SCRATCH_DIR)/nb_simple.c $(RUNTIME_INCLUDES) $(SCRATCH_DIR)/gen_headers.h
 	$(CC) $(RCFLAGS) $(SCRATCH_DIR)/nb_simple.c -o $(BUILD_DIR)/runtime/nb_simple.o -c -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
 
 
-$(BUILD_DIR)/runtime/nb_runtime_simple.o: $(RUNTIME_DIR)/nb_runtime.c $(RUNTIME_INCLUDES) $(SCRATCH_DIR)/nb_simple.c
+$(BUILD_DIR)/runtime/nb_runtime_simple.o: $(RUNTIME_DIR)/nb_runtime.c $(RUNTIME_INCLUDES) $(SCRATCH_DIR)/nb_simple.c $(SCRATCH_DIR)/gen_headers.h
 	$(CC) $(RCFLAGS) -o $@ $< -c -I $(SCRATCH_DIR) -I $(RUNTIME_DIR)
 
 
@@ -163,10 +163,12 @@ simple_test_reliable: executables $(SIMPLE_RUNTIME_OBJS)
 	$(CC) $(SIMPLE_RUNTIME_OBJS) $(BUILD_DIR)/test/simple_test_reliable/client.o $(BUILD_DIR)/runtime/nb_ipc_transport.o -o $(BUILD_DIR)/test/simple_reliable_client
 
 .PHONY: simple_desert
-simple_desert: executables $(SIMPLE_RUNTIME_OBJS)
-	$(CXX) $(RCFLAGS) -c $(BASE_DIR)/../nb_p.cpp -o $(BASE_DIR)/../.build/nb_p.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR) -I $(BASE_DIR)/.. -I $(BASE_DIR)/../../../../.unpacked_folder/nsmiracle-1.1.2/nsmiracle/ -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34/common -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34 -I $(BASE_DIR)/../../../../.unpacked_folder/tclcl-1.20 -I $(BASE_DIR)/../../../../.unpacked_folder/tcl-8.4.19/generic -I $(BASE_DIR)/../../../../.unpacked_folder/otcl-1.14 -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34/mobile -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34/trace -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34/tcp -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34/apps
+
+simple_desert: $(BASE_DIR)/../.build/libmynb_p.a
+
+$(BASE_DIR)/../.build/libmynb_p.a: executables $(SIMPLE_RUNTIME_OBJS) $(RUNTIME_DIR)/nb_desert_transport.cc
 	$(CXX) $(RCFLAGS) -c $(RUNTIME_DIR)/nb_desert_transport.cc -o $(BASE_DIR)/../.build/nb_desert_transport.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR) -I $(BASE_DIR)/.. -I $(BASE_DIR)/../../../../.unpacked_folder/nsmiracle-1.1.2/nsmiracle/ -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34/common -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34 -I $(BASE_DIR)/../../../../.unpacked_folder/tclcl-1.20 -I $(BASE_DIR)/../../../../.unpacked_folder/tcl-8.4.19/generic -I $(BASE_DIR)/../../../../.unpacked_folder/otcl-1.14 -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34/mobile -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34/trace -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34/tcp -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34/apps
-	ar cr $(BASE_DIR)/../.build/libmynb_p.a $(SIMPLE_RUNTIME_OBJS) $(BASE_DIR)/../.build/nb_p.o $(BASE_DIR)/../.build/nb_desert_transport.o
+	ar crv $(BASE_DIR)/../.build/libmynb_p.a $(SIMPLE_RUNTIME_OBJS)  $(BASE_DIR)/../.build/nb_desert_transport.o
 
 simple_test_run: simple_test
 	$(BUILD_DIR)/test/simple_server &

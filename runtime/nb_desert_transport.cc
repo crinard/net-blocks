@@ -23,9 +23,9 @@ static int out_of_order_len = 0;
 #define OUT_OF_ORDER_CHANCE (5)
 #define PACKET_DROP_CHANCE (5)
 
-void nb__desert_init(Nb_pModule *_m) {
+void nb__desert_init(void *_m) {
 	// connect mode
-	m = _m;
+	m = (Nb_pModule*)_m;
 	return;
 }
 
@@ -95,13 +95,13 @@ int nb__send_packet(char* buff, int len) {
 	// p->data() = buff;
 	// p->size() = len;
 	//TODO: IP headers, or generically writing -- need to ask Ajay.
-	m->sendDown(&p,0);
+	m->senddown(&p,0);
 	// If there is a pending packet, send it now
 	if (out_of_order_len) {
 		Packet out_of_order_p = Packet();
 		// out_of_order_p->userdata() = out_of_order_store;
 		// out_of_order_p->size() = out_of_order_len;
-		m->sendDown(&out_of_order_p, 0);
+		m->senddown(&out_of_order_p, 0);
 		out_of_order_len = 0;
 	}
 	return 0;

@@ -2,7 +2,7 @@
 #define NB_RUNTIME_H
 #include <stdlib.h>
 #include <string.h>
-#include "/home/chris/Desktop/DESERT_Underwater/DESERT_Framework/DESERT/network/nb_p/net-blocks/scratch/gen_headers.h"
+#include "gen_headers.h"
 #include "nb_timer.h"
 
 #ifdef __cplusplus 
