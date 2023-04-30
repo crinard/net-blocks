@@ -80,30 +80,11 @@ char* nb__poll_packet(int* size, int headroom) {
  */
 int nb__send_packet(char* buff, int len) {
 	std::cout << "nb__send_packet" << std::endl;
-	// Don't try to out of order if we already have on pending
-	if (out_of_order_len == 0 && nb__desert_simulate_out_of_order) {
-		int r = rand() % OUT_OF_ORDER_CHANCE;
-		if (r == 0) {
-			out_of_order_len = len;
-			memcpy(out_of_order_store, buff, len);
-			return len;
-		}
-	}
-	//nb__debug_packet(buff);
 	Packet p = Packet();
-
-	// p->data() = buff;
-	// p->size() = len;
-	//TODO: IP headers, or generically writing -- need to ask Ajay.
+	p.allocdata(len);
+	unsigned char* pktdata_p = p.accessdata();
+	memcpy(pktdata_p, buff, len);
 	m->senddown(&p,0);
-	// If there is a pending packet, send it now
-	if (out_of_order_len) {
-		Packet out_of_order_p = Packet();
-		// out_of_order_p->userdata() = out_of_order_store;
-		// out_of_order_p->size() = out_of_order_len;
-		m->senddown(&out_of_order_p, 0);
-		out_of_order_len = 0;
-	}
 	return 0;
 }
 
