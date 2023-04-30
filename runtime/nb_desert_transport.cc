@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <iostream>
+#include <vector>
 
 #include "packet.h"
 #include "module.h"
@@ -26,6 +27,7 @@ static int out_of_order_len = 0;
 void nb__desert_init(void *_m) {
 	// connect mode
 	m = (Nb_pModule*)_m;
+	fprintf(stderr, "nb__desert_init, module = %lu\n", (uint64_t)m);
 	return;
 }
 
@@ -43,11 +45,37 @@ char nb__reuse_mtu_buffer[DESERT_MTU];
  * @return char* 
  */
 char* nb__poll_packet(int* size, int headroom) {
+	// int len;
+	// static char temp_buf[DESERT_MTU];
+	// //TODO: Replace w/ real code
+	// // size_t readbuflen = 10000;
+	// // Packet** readbuf = m->getRecvBuf(&readbuflen);
+	// // assert(readbuflen < READ_BUF_LEN);
+	// char ** ret = (char**) malloc(sizeof(Packet) * 1);
+	// // for (size_t i = 0; i < readbuflen; i++) {
+	// // 	Packet* p = readbuf[i];
+	// // 	unsigned char* data = (unsigned char*) p->userdata();
+	// // 	//TODO: how to handle multiple packets from different sources?
+	// // 	// char* data[DESERT_MTU];
+	// // 	if  (1) {//(p->size() > 0) {
+	// // 		char* buf = (char*)malloc(DESERT_MTU + headroom); //TODO: FIx this
+	// // 		memcpy(buf + headroom, (char*) p->accessdata() , DESERT_MTU);
+	// // 		ret[i] = buf;
+	// // 		*size++;
+	// // 		free(readbuf[i]);
+	// // 	}
+	// // }
+	// // m->setRecvBufLen(0);
+	// // Packet p = Packet();
+	// return ret[0];
+	// // return ret[0]; //TODO: fix this
+	std::cout << "nb__poll_packet" << std::endl;
 	int len;
 	static char temp_buf[DESERT_MTU];
 	// std::vector<Packet*> readbuf = m->getNBReadBuffer();
 	//TODO: Replace w/ real code
-
+	m->setRecvBufLen(0);
+	fprintf(stderr, "nb__poll_packet, m = %lu, len = %lu\n", (uint64_t) m, m->getRecvBufLen());
 	Packet p_fake = Packet();
 
 	std::vector<Packet*> readbuf;
@@ -71,6 +99,7 @@ char* nb__poll_packet(int* size, int headroom) {
 	return ret[0]; //TODO: fix this
 }
 
+static int uidcnt_ = 0;
 /**
  * @brief Sends a packet down a layer
  * 
@@ -80,11 +109,16 @@ char* nb__poll_packet(int* size, int headroom) {
  */
 int nb__send_packet(char* buff, int len) {
 	std::cout << "nb__send_packet" << std::endl;
-	Packet p = Packet();
-	p.allocdata(len);
-	unsigned char* pktdata_p = p.accessdata();
-	memcpy(pktdata_p, buff, len);
-	m->senddown(&p,0);
+	Packet *p = Packet::alloc();
+	hdr_cmn *ch = hdr_cmn::access(p);
+	ch->uid() = uidcnt_++;
+	ch->ptype() = 2;
+	ch->size() = 125;
+	// TODO: fix this
+	// p.allocdata(len);
+	// unsigned char* pktdata_p = p.accessdata();
+	// memcpy(pktdata_p, buff, len);
+	m->senddown(p,0);
 	return 0;
 }
 

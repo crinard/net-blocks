@@ -36,6 +36,7 @@ void nb__insert_accept_queue(nb__accept_queue_t* q, unsigned src_app_id, char* s
 }
 
 int nb__read(nb__connection_t* c, char* buff, int max_len) {
+	fprintf("nb__read: %d\n", c->input_queue->current_elems);
 	if (c->input_queue->current_elems == 0)
 		return 0;
 	char* payload = c->input_queue->data_queue_elems[0];
@@ -117,7 +118,7 @@ void nb__main_loop_step(void) {
 	struct timespec tv;
 	clock_gettime(CLOCK_MONOTONIC, &tv);
 	nb__time_now = tv.tv_sec * 1000 + tv.tv_nsec / 1000000;
-
+	fprintf(stderr, "nb__main_loop_step\n");
 	int len = 0;	
 
 	// Something that is not NULL;
