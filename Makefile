@@ -47,9 +47,9 @@ endif
 
 
 ifeq ($(DEBUG),1)
-RCFLAGS=-g -fPIC #-fsanitize=address
+RCFLAGS=-g -O0 -fPIC
 else
-RCFLAGS=-O3 -fPIC #-fsanitize=address
+RCFLAGS=-O3 -fPIC
 endif
 
 

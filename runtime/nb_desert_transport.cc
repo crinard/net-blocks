@@ -45,58 +45,53 @@ char nb__reuse_mtu_buffer[DESERT_MTU];
  * @return char* 
  */
 char* nb__poll_packet(int* size, int headroom) {
-	// int len;
-	// static char temp_buf[DESERT_MTU];
-	// //TODO: Replace w/ real code
-	// // size_t readbuflen = 10000;
-	// // Packet** readbuf = m->getRecvBuf(&readbuflen);
-	// // assert(readbuflen < READ_BUF_LEN);
-	// char ** ret = (char**) malloc(sizeof(Packet) * 1);
-	// // for (size_t i = 0; i < readbuflen; i++) {
-	// // 	Packet* p = readbuf[i];
-	// // 	unsigned char* data = (unsigned char*) p->userdata();
-	// // 	//TODO: how to handle multiple packets from different sources?
-	// // 	// char* data[DESERT_MTU];
-	// // 	if  (1) {//(p->size() > 0) {
-	// // 		char* buf = (char*)malloc(DESERT_MTU + headroom); //TODO: FIx this
-	// // 		memcpy(buf + headroom, (char*) p->accessdata() , DESERT_MTU);
-	// // 		ret[i] = buf;
-	// // 		*size++;
-	// // 		free(readbuf[i]);
-	// // 	}
-	// // }
-	// // m->setRecvBufLen(0);
-	// // Packet p = Packet();
-	// return ret[0];
-	// // return ret[0]; //TODO: fix this
-	std::cout << "nb__poll_packet" << std::endl;
-	int len;
-	static char temp_buf[DESERT_MTU];
-	// std::vector<Packet*> readbuf = m->getNBReadBuffer();
-	//TODO: Replace w/ real code
-	m->setRecvBufLen(0);
-	fprintf(stderr, "nb__poll_packet, m = %lu, len = %lu\n", (uint64_t) m, m->getRecvBufLen());
-	Packet p_fake = Packet();
-
-	std::vector<Packet*> readbuf;
-	readbuf.push_back(&p_fake);
-
-	*size = 0;//TODO: Should assert?
-	char ** ret = (char**) malloc(sizeof(char*) * readbuf.size());
-	for (int i = 0; i < readbuf.size(); i++) {
+	size_t readbuflen = 10000;
+	// This holds packets from the application level recv() function, which just enques them into the read buffer.
+	Packet** readbuf = m->getRecvBuf(&readbuflen);
+	assert(readbuflen < READ_BUF_LEN); // If this ain't true we have problems.
+	int totalSize = 0; // Combined size of the data portion of all the packets.
+	int lastPacket = 0;
+	*size = 0;
+	for (int i = 0; i < readbuflen; i++) {
 		Packet* p = readbuf[i];
-		// unsigned char* data = p->userdata();
-		//TODO: how to handle multiple packets from different sources?
-		char* data[DESERT_MTU];
-		if  (1) {//(p->size() > 0) {
-			char* buf = (char*)malloc(DESERT_MTU + headroom);
-			memcpy(buf + headroom, data , DESERT_MTU);
-			ret[i] = buf;
-			*size++;
+		int packetLen = p->datalen();
+		if (totalSize + packetLen > DESERT_MTU) {
+			lastPacket = i;
+			break;
 		}
 	}
-	readbuf.clear();
-	return ret[0]; //TODO: fix this
+
+	char* scratch[totalSize];
+	if (totalSize == 0) {
+		*size = 0;
+		return NULL;
+	}
+	size_t used = 0;
+	for (size_t i = 0; i < lastPacket; i++) {
+		Packet* p = readbuf[i];
+		// if (p->accessdata() == NULL) {
+		// 	// This packet has been freed, so we can skip it.
+			// std::cout << "total size =" << totalSize << "\n";
+		// 	continue;
+		// }
+		size_t len = p->datalen();
+		// memcpy(scratch + used, (char*) p->accessdata(), len);
+		Packet::free(p);
+		used += len;
+	}
+
+	assert(totalSize < DESERT_MTU);
+	char* ret = (char*)malloc(DESERT_MTU + headroom);
+	memcpy(ret + headroom, scratch, totalSize);
+	*size = totalSize;
+	// Reset the readbuf
+	for (size_t i = 0; (i < readbuflen - lastPacket); i++) {
+		// Copy the packet at the top of the buffer to the first idx ()
+		readbuf[i] = readbuf[i+lastPacket];
+	}
+	m->setRecvBufLen(readbuflen - lastPacket);
+	std::cout << "finished poll packet\n";
+	return ret;
 }
 
 static int uidcnt_ = 0;
@@ -107,17 +102,31 @@ static int uidcnt_ = 0;
  * @param len 
  * @return int 0 or 1 always
  */
+#define MAX_TX_SIZE 650
 int nb__send_packet(char* buff, int len) {
-	std::cout << "nb__send_packet" << std::endl;
+	int numPkts = len / MAX_TX_SIZE;
+	size_t offset = 0;
+	for (int i = 0; i < numPkts; i++) {
+		Packet *p = Packet::alloc();
+		hdr_cmn *ch = hdr_cmn::access(p);
+		ch->uid() = uidcnt_++;
+		ch->ptype() = 2; //CBR style header Fwiw.
+		ch->size() = MAX_TX_SIZE;
+		p->allocdata(MAX_TX_SIZE);
+		unsigned char* pktdata_p = p->accessdata();
+		assert(offset < len);
+		memcpy((char*) pktdata_p, buff + offset, MAX_TX_SIZE);
+		m->senddown(p,0);
+	}
 	Packet *p = Packet::alloc();
 	hdr_cmn *ch = hdr_cmn::access(p);
 	ch->uid() = uidcnt_++;
-	ch->ptype() = 2;
-	ch->size() = 125;
-	// TODO: fix this
-	// p.allocdata(len);
-	// unsigned char* pktdata_p = p.accessdata();
-	// memcpy(pktdata_p, buff, len);
+	ch->ptype() = 2; //CBR style header Fwiw.
+	ch->size() = len % MAX_TX_SIZE;
+	p->allocdata(len % MAX_TX_SIZE);
+	unsigned char* pktdata_p = p->accessdata();
+	assert(offset < len);
+	memcpy((char*) pktdata_p, buff + offset, len % MAX_TX_SIZE);
 	m->senddown(p,0);
 	return 0;
 }

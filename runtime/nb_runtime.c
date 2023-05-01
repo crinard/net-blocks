@@ -122,14 +122,21 @@ void nb__main_loop_step(void) {
 	int len = 0;	
 
 	// Something that is not NULL;
-	void* p = &len;	
+	char* p = &len;	
 
 	// Currently just processing one packet
 	// TODO: Get the headroom value from the generated system
 	p =  nb__poll_packet(&len, 20);
+	fprintf(stderr, "past poll packet\n");
+	size_t j = 0;
+	for (int i = 0; i < len; i++) {
+		j += p[i + 20];
+		fprintf(stderr, "in loop, i = %i",i);
+	}
+	fprintf(stderr, "past loop, len = %i, p = %p\n", len, p);
 	if (p != NULL)
 		nb__run_ingress_step(p, len);
-
+	fprintf(stderr, "past ingress step\n");
 	nb__cycle_connections();
 	
 	nb__check_timers();
