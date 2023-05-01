@@ -118,7 +118,9 @@ void nb__main_loop_step(void) {
 	struct timespec tv;
 	clock_gettime(CLOCK_MONOTONIC, &tv);
 	nb__time_now = tv.tv_sec * 1000 + tv.tv_nsec / 1000000;
-	fprintf(stderr, "nb__main_loop_step\n");
+	#ifdef DEBUG
+		fprintf(stderr, "nb__main_loop_step\n"); 
+	#endif
 	int len = 0;	
 
 	// Something that is not NULL;
@@ -127,16 +129,24 @@ void nb__main_loop_step(void) {
 	// Currently just processing one packet
 	// TODO: Get the headroom value from the generated system
 	p =  nb__poll_packet(&len, 20);
-	fprintf(stderr, "past poll packet\n");
+	#ifdef DEBUG 
+		fprintf(stderr, "past poll packet\n"); 
+	#endif
 	size_t j = 0;
 	for (int i = 0; i < len; i++) {
 		j += p[i + 20];
-		fprintf(stderr, "in loop, i = %i",i);
+		#ifdef DEBUG
+			fprintf(stderr, "in loop, i = %i",i); 
+		#endif
 	}
-	fprintf(stderr, "past loop, len = %i, p = %p\n", len, p);
+	#ifdef DEBUG
+		fprintf(stderr, "past loop, len = %i, p = %p\n", len, p);
+	#endif
 	if (p != NULL)
 		nb__run_ingress_step(p, len);
+	#ifdef DEBUG
 	fprintf(stderr, "past ingress step\n");
+	#endif
 	nb__cycle_connections();
 	
 	nb__check_timers();

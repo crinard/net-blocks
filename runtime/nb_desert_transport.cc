@@ -69,13 +69,13 @@ char* nb__poll_packet(int* size, int headroom) {
 	size_t used = 0;
 	for (size_t i = 0; i < lastPacket; i++) {
 		Packet* p = readbuf[i];
-		// if (p->accessdata() == NULL) {
+		if (p->datalen() > 0) {
 		// 	// This packet has been freed, so we can skip it.
 			// std::cout << "total size =" << totalSize << "\n";
-		// 	continue;
-		// }
+			continue;
+		}
 		size_t len = p->datalen();
-		// memcpy(scratch + used, (char*) p->accessdata(), len);
+		memcpy(scratch + used, (char*) p->accessdata(), len);
 		Packet::free(p);
 		used += len;
 	}
@@ -102,31 +102,16 @@ static int uidcnt_ = 0;
  * @param len 
  * @return int 0 or 1 always
  */
-#define MAX_TX_SIZE 650
+// #define MAX_TX_SIZE 650
 int nb__send_packet(char* buff, int len) {
-	int numPkts = len / MAX_TX_SIZE;
-	size_t offset = 0;
-	for (int i = 0; i < numPkts; i++) {
-		Packet *p = Packet::alloc();
-		hdr_cmn *ch = hdr_cmn::access(p);
-		ch->uid() = uidcnt_++;
-		ch->ptype() = 2; //CBR style header Fwiw.
-		ch->size() = MAX_TX_SIZE;
-		p->allocdata(MAX_TX_SIZE);
-		unsigned char* pktdata_p = p->accessdata();
-		assert(offset < len);
-		memcpy((char*) pktdata_p, buff + offset, MAX_TX_SIZE);
-		m->senddown(p,0);
-	}
 	Packet *p = Packet::alloc();
 	hdr_cmn *ch = hdr_cmn::access(p);
 	ch->uid() = uidcnt_++;
 	ch->ptype() = 2; //CBR style header Fwiw.
-	ch->size() = len % MAX_TX_SIZE;
-	p->allocdata(len % MAX_TX_SIZE);
+	ch->size() = len;
+	p->allocdata(len);
 	unsigned char* pktdata_p = p->accessdata();
-	assert(offset < len);
-	memcpy((char*) pktdata_p, buff + offset, len % MAX_TX_SIZE);
+	memcpy((char*) pktdata_p, buff, len);
 	m->senddown(p,0);
 	return 0;
 }
