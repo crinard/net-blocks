@@ -52,6 +52,7 @@ char* nb__poll_packet(int* size, int headroom) {
 	int totalSize = 0; // Combined size of the data portion of all the packets.
 	int lastPacket = 0;
 	*size = 0;
+	// fprintf(stderr, "nb__poll_packet, readbuflen = %lu\n", readbuflen);
 	for (int i = 0; i < readbuflen; i++) {
 		Packet* p = readbuf[i];
 		int packetLen = p->datalen();
@@ -59,19 +60,20 @@ char* nb__poll_packet(int* size, int headroom) {
 			lastPacket = i;
 			break;
 		}
+		totalSize += packetLen;
 	}
-
-	char* scratch[totalSize];
+	char* scratch[DESERT_MTU];
 	if (totalSize == 0) {
 		*size = 0;
+		m->setRecvBufLen(0);
 		return NULL;
 	}
 	size_t used = 0;
-	for (size_t i = 0; i < lastPacket; i++) {
+	// Take from the top and copy down.
+	for (size_t i = 0; (i < lastPacket); i++) {
 		Packet* p = readbuf[i];
-		if (p->datalen() > 0) {
+		if (p->datalen() == 0) {
 		// 	// This packet has been freed, so we can skip it.
-			// std::cout << "total size =" << totalSize << "\n";
 			continue;
 		}
 		size_t len = p->datalen();
@@ -79,10 +81,10 @@ char* nb__poll_packet(int* size, int headroom) {
 		Packet::free(p);
 		used += len;
 	}
-
+	// std::cout << "finished copying packets\n";
 	assert(totalSize < DESERT_MTU);
 	char* ret = (char*)malloc(DESERT_MTU + headroom);
-	memcpy(ret + headroom, scratch, totalSize);
+	memcpy(ret + headroom, scratch, DESERT_MTU);
 	*size = totalSize;
 	// Reset the readbuf
 	for (size_t i = 0; (i < readbuflen - lastPacket); i++) {
@@ -90,7 +92,6 @@ char* nb__poll_packet(int* size, int headroom) {
 		readbuf[i] = readbuf[i+lastPacket];
 	}
 	m->setRecvBufLen(readbuflen - lastPacket);
-	std::cout << "finished poll packet\n";
 	return ret;
 }
 
@@ -102,7 +103,6 @@ static int uidcnt_ = 0;
  * @param len 
  * @return int 0 or 1 always
  */
-// #define MAX_TX_SIZE 650
 int nb__send_packet(char* buff, int len) {
 	Packet *p = Packet::alloc();
 	hdr_cmn *ch = hdr_cmn::access(p);
@@ -112,6 +112,9 @@ int nb__send_packet(char* buff, int len) {
 	p->allocdata(len);
 	unsigned char* pktdata_p = p->accessdata();
 	memcpy((char*) pktdata_p, buff, len);
+	// fprintf(stderr, "nb__send_packet, len = %i\n", len);
+	assert(!memcmp((char*) pktdata_p, buff, len));
+	assert(len == p->datalen());
 	m->senddown(p,0);
 	return 0;
 }
