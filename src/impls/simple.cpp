@@ -86,8 +86,8 @@ int main(int argc, char* argv[]) {
 
 	payload_module::instance.init_module();
 
-	inorder_module::instance.configInorderStrategy(inorder_module::hold_forever);
-	//inorder_module::instance.configInorderStrategy(inorder_module::no_inorder);
+	// inorder_module::instance.configInorderStrategy(inorder_module::hold_forever);
+	inorder_module::instance.configInorderStrategy(inorder_module::no_inorder);
 	inorder_module::instance.init_module();
 
 	signaling_module::instance.init_module();	

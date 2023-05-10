@@ -28,6 +28,7 @@ void nb__desert_init(void *_m) {
 	// connect mode
 	m = (Nb_pModule*)_m;
 	fprintf(stderr, "nb__desert_init, module = %lu\n", (uint64_t)m);
+	m->setRecvBufLen(0);
 	return;
 }
 
@@ -52,7 +53,6 @@ char* nb__poll_packet(int* size, int headroom) {
 	int totalSize = 0; // Combined size of the data portion of all the packets.
 	int lastPacket = 0;
 	*size = 0;
-	// fprintf(stderr, "nb__poll_packet, readbuflen = %lu\n", readbuflen);
 	for (int i = 0; i < readbuflen; i++) {
 		Packet* p = readbuf[i];
 		int packetLen = p->datalen();
@@ -69,7 +69,6 @@ char* nb__poll_packet(int* size, int headroom) {
 		return NULL;
 	}
 	size_t used = 0;
-	// Take from the top and copy down.
 	for (size_t i = 0; (i < lastPacket); i++) {
 		Packet* p = readbuf[i];
 		if (p->datalen() == 0) {
@@ -96,6 +95,8 @@ char* nb__poll_packet(int* size, int headroom) {
 }
 
 static int uidcnt_ = 0;
+static int send_cnt = 0;
+static size_t sent_bytes = 0;
 /**
  * @brief Sends a packet down a layer
  * 
@@ -104,19 +105,34 @@ static int uidcnt_ = 0;
  * @return int 0 or 1 always
  */
 int nb__send_packet(char* buff, int len) {
-	Packet *p = Packet::alloc();
-	hdr_cmn *ch = hdr_cmn::access(p);
-	ch->uid() = uidcnt_++;
-	ch->ptype() = 2; //CBR style header Fwiw.
-	ch->size() = len;
-	p->allocdata(len);
-	unsigned char* pktdata_p = p->accessdata();
-	memcpy((char*) pktdata_p, buff, len);
-	// fprintf(stderr, "nb__send_packet, len = %i\n", len);
-	assert(!memcmp((char*) pktdata_p, buff, len));
-	assert(len == p->datalen());
-	m->senddown(p,0);
-	return 0;
+	if (len > DESERT_MTU) { // Recurisvely call till done.
+		for (int i = 0; i * DESERT_MTU < len; i++) {
+			int thislen = DESERT_MTU;
+			if (i * DESERT_MTU + thislen > len) {
+				thislen = len - i * DESERT_MTU;
+			}
+			nb__send_packet(buff + i * DESERT_MTU, thislen);
+		}
+		return 0;
+	} else {
+		assert(len <= DESERT_MTU);
+		Packet *p = Packet::alloc();
+		hdr_cmn *ch = hdr_cmn::access(p);
+		ch->uid() = uidcnt_++;
+		ch->ptype() = 2; //CBR style header Fwiw.
+		ch->size() = len;
+		p->allocdata(len);
+		unsigned char* pktdata_p = p->accessdata();
+		memcpy((char*) pktdata_p, buff, len);
+		assert(!memcmp((char*) pktdata_p, buff, len));
+		std::cerr << "len = " << len << '\n';
+		assert(len == p->datalen());
+		m->senddown(p,0);
+		send_cnt++;
+		sent_bytes += len;
+		fprintf(stderr, "LLSend = %i, LLBytes %lu\n", send_cnt, sent_bytes);
+		return 0;
+	}
 }
 
 
