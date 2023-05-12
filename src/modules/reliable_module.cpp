@@ -40,7 +40,7 @@ static void redelivery_cb(builder::dyn_var<runtime::timer_t*> t, builder::dyn_va
 	packet_t p = param;	
 	builder::dyn_var<int> size = net_packet["total_len"]->get_integer(p);
 	runtime::send_packet(p + get_headroom(), size);
-	
+	fprintf(stdout, "Redelivery timer fired\n");
 	runtime::insert_timer(t, to + REDELIVERY_TIMEOUT_MS, redelivery_timer_callback, p);
 }
 

@@ -19,7 +19,7 @@ static int out_of_order_len = 0;
 void nb__ipc_init(const char* sock_path, int mode) {
 	ipc_socket = socket(AF_UNIX, SOCK_SEQPACKET, 0);
 	if (ipc_socket < 0) {
-		fprintf(stderr, "Socket create failed\n");
+		fprintf(stdout, "Socket create failed\n");
 		exit(-1);
 	}
 
@@ -30,7 +30,7 @@ void nb__ipc_init(const char* sock_path, int mode) {
 		addr.sun_family = AF_UNIX;
 		strcpy(addr.sun_path, sock_path);
 		if (connect(ipc_socket, (struct sockaddr*) &addr, sizeof(struct sockaddr_un)) < 0) {
-			fprintf(stderr, "Socket connect failed\n");
+			fprintf(stdout, "Socket connect failed\n");
 			exit(-1);
 		}
 		fcntl(ipc_socket, F_SETFL, O_NONBLOCK);
@@ -41,20 +41,20 @@ void nb__ipc_init(const char* sock_path, int mode) {
 		struct sockaddr_un addr;
 		int ipc_fd = socket(AF_UNIX, SOCK_SEQPACKET, 0);
 		if (ipc_fd < 0) {
-			fprintf(stderr, "Socket create failed\n");
+			fprintf(stdout, "Socket create failed\n");
 			exit(-1);
 		}
 		memset(&addr, 0, sizeof(addr));
 		addr.sun_family = AF_UNIX;
 		strcpy(addr.sun_path, sock_path);
 		if (bind(ipc_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
-			fprintf(stderr, "Socket bind failed\n");
+			fprintf(stdout, "Socket bind failed\n");
 			exit(-1);
 		}
 		listen(ipc_fd, 1);
 		ipc_socket = accept(ipc_fd, NULL, NULL);
 		if (ipc_socket < 0) {
-			fprintf(stderr, "Socket accept failed\n");
+			fprintf(stdout, "Socket accept failed\n");
 			exit(-1);
 		}
 		fcntl(ipc_socket, F_SETFL, O_NONBLOCK);

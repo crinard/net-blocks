@@ -4,7 +4,7 @@
 #include "core/framework.h"
 
 #define REDELIVERY_BUFFER_SIZE (32)
-#define REDELIVERY_TIMEOUT_MS (5)
+#define REDELIVERY_TIMEOUT_MS (50000)
 
 namespace net_blocks {
 
