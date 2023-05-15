@@ -117,7 +117,7 @@ void nb__main_loop_step(void) {
   clock_gettime(CLOCK_MONOTONIC, &tv);
   nb__time_now = tv.tv_sec * 1000 + tv.tv_nsec / 1000000;
 #ifdef DESERT
-  nb__time_now = (long long)(nb__desert_get_time() * 1000);
+  nb__time_now = (long long)(nb__desert_get_time() * 10);
 #endif
   int len = 0;
 
@@ -154,7 +154,7 @@ unsigned long long nb__get_time_ms_now(void) {
     clock_gettime(CLOCK_MONOTONIC, &tv);
     nb__time_now = tv.tv_sec * 1000 + tv.tv_nsec / 1000000;
 #ifdef DESERT
-    nb__time_now = (long long)(nb__desert_get_time() * 1000);
+    nb__time_now = (long long)(nb__desert_get_time() * 10);
 #endif
     // Seconds * 1000 + nanoseconds / 1000000 (10^-3)
   }
