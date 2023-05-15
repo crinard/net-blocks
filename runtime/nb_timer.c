@@ -10,9 +10,6 @@ nb__timer* nb__timer_free_list = NULL;
 nb__timer* nb__timer_slots[MAX_TIMER_SLOTS];
 
 nb__timer* nb__alloc_timer(void) {
-  return NULL;
-  fprintf(stderr, "allocating timer, nb__timer_free_list = %p\n",
-          nb__timer_free_list);
   if (nb__timer_free_list == NULL) return NULL;
   nb__timer* to_ret = nb__timer_free_list;
   nb__timer_free_list = to_ret->next;
@@ -24,30 +21,19 @@ void nb__return_timer(nb__timer* t) {
 }
 void nb__insert_timer(nb__timer* t, unsigned long long to,
                       nb__timer_callback_t cb, void* argument) {
-  return;
-  fprintf(stderr, "inserting timer, t = %p, to = %llu, cb = %p, arg = %p\n",
-          (void*)t, (void*)to, (void*)cb, (void*)argument);
   t->callback = cb;
-  fprintf(stderr, "inserting argument\n");
   t->argument = argument;
-  fprintf(stderr, "inserting timeout\n");
   t->timeout = to;
-  fprintf(stderr, "inserting slot\n");
+
   // TODO: Ensure that we do not insert timers too ahead
   int slot = to % MAX_TIMER_SLOTS;
-  fprintf(stderr, "found slot %d\n", slot);
   t->next = nb__timer_slots[slot];
-  fprintf(stderr, "inserting next\n");
   t->prev = NULL;
-  fprintf(stderr, "inserting prev\n");
   if (t->next) t->next->prev = t;
-  fprintf(stderr, "inserting null check\n");
   nb__timer_slots[slot] = t;
-  fprintf(stderr, "timer inserted\n");
   return;
 }
 void nb__remove_timer(nb__timer* t) {
-  return;
   if (t->next) {
     t->next->prev = t->prev;
   }
@@ -76,7 +62,6 @@ void nb__init_timers(void) {
 }
 
 void nb__check_timers(void) {
-  return;
   unsigned long long t_now = nb__get_time_ms_now();
   // Check all timers till now
   // This is because sometimes timers might not be checked if the stack is stuck
@@ -93,6 +78,5 @@ void nb__check_timers(void) {
       t->callback(t, t->argument, i);
     }
   }
-  // fprintf(stdout, "timer checked\n");
   nb__last_timer_checked = t_now;
 }

@@ -34,12 +34,10 @@ void nb__insert_accept_queue(nb__accept_queue_t* q, unsigned src_app_id,
 }
 
 int nb__read(nb__connection_t* c, char* buff, int max_len) {
-  fprintf(stdout, "nb__read: %d\n", c->input_queue->current_elems);
   if (c->input_queue->current_elems == 0) return 0;
   char* payload = c->input_queue->data_queue_elems[0];
   int payload_size = c->input_queue->data_queue_elems_size[0];
   int i;
-  // TODO: Replace this with a circular queue
   for (i = 1; i < c->input_queue->current_elems; i++) {
     c->input_queue->data_queue_elems[i - 1] =
         c->input_queue->data_queue_elems[i];
@@ -114,6 +112,7 @@ static void nb__cycle_connections(void) {
 
 unsigned long long nb__time_now = -1;
 void nb__main_loop_step(void) {
+  fprintf(stdout, "in main loop step\n");
   struct timespec tv;
   clock_gettime(CLOCK_MONOTONIC, &tv);
   nb__time_now = tv.tv_sec * 1000 + tv.tv_nsec / 1000000;
@@ -128,27 +127,10 @@ void nb__main_loop_step(void) {
   // Currently just processing one packet
   // TODO: Get the headroom value from the generated system
   p = nb__poll_packet(&len, 20);
-#ifdef DEBUG
-  fprintf(stdout, "past poll packet\n");
-#endif
-  size_t j = 0;
-  for (int i = 0; i < len; i++) {
-    j += p[i + 20];
-#ifdef DEBUG
-    fprintf(stdout, "in loop, i = %i", i);
-#endif
-  }
-#ifdef DEBUG
-  fprintf(stdout, "past loop, len = %i, p = %p\n", len, p);
-#endif
   if (p != NULL) nb__run_ingress_step(p, len);
-#ifdef DEBUG
-  fprintf(stdout, "past ingress step\n");
-#endif
   nb__cycle_connections();
 
   nb__check_timers();
-  fprintf(stdout, "Finished main loop step\n");
 }
 
 // Set this at init
