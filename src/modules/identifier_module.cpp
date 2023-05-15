@@ -25,15 +25,15 @@ void identifier_module::init_module(void) {
 
 	// A non-send member
 	// Network module ignores this while sending and adds headroom for this while receiving
-	net_packet.add_member("flow_identifier", new generic_integer_member<unsigned long long>((int)member_flags::aligned), 0);
+	net_packet.add_member("flow_identifier", new generic_integer_member<unsigned long long>((int)member_flags::unaligned), 0);
 
-	net_packet.add_member("dst_host_id", new byte_array_member<HOST_IDENTIFIER_LEN>((int)member_flags::aligned), 1);
-	net_packet.add_member("src_host_id", new byte_array_member<HOST_IDENTIFIER_LEN>((int)member_flags::aligned), 1);
+	net_packet.add_member("dst_host_id", new byte_array_member<HOST_IDENTIFIER_LEN>((int)member_flags::unaligned), 1);
+	net_packet.add_member("src_host_id", new byte_array_member<HOST_IDENTIFIER_LEN>((int)member_flags::unaligned), 1);
 	// Member to identify protocol 
-	net_packet.add_member("protocol_identifier", new generic_integer_member<unsigned int>((int)member_flags::aligned), 1);
+	net_packet.add_member("protocol_identifier", new generic_integer_member<unsigned int>((int)member_flags::unaligned), 1);
 
-	net_packet.add_member("dst_app_id", new generic_integer_member<int>((int)member_flags::aligned), 3);
-	net_packet.add_member("src_app_id", new generic_integer_member<int>((int)member_flags::aligned), 3);
+	net_packet.add_member("dst_app_id", new generic_integer_member<int>((int)member_flags::unaligned), 3);
+	net_packet.add_member("src_app_id", new generic_integer_member<int>((int)member_flags::unaligned), 3);
 
 
 	

@@ -16,6 +16,11 @@
 #include "nb_p.h"
 
 static Nb_pModule *m;
+static int uidcnt_ = 0;
+static int send_cnt = 0;
+static size_t sent_bytes = 0;
+static int recv_cnt = 0;
+static size_t recv_bytes = 0;
 
 #define DESERT_MTU (1024)
 int nb__desert_simulate_out_of_order = 0;
@@ -33,13 +38,12 @@ void nb__desert_init(void *_m) {
 }
 
 void nb__desert_deinit(void) {
+	fprintf(stdout, "Nb_p Low Level: sent %d packets, %lu bytes, received %d packets, %lu bytes\n", send_cnt, sent_bytes, recv_cnt, recv_bytes);
 	return;
 }
 
 char nb__reuse_mtu_buffer[DESERT_MTU];
 
-static int rx_pkt_count = 0;
-static size_t rx_pkt_bytes = 0;
 /**
  * @brief polls packets from those read into nb_read_pkt_buf from the recv() function in nb_p.c
  * 
@@ -99,14 +103,11 @@ char* nb__poll_packet(int* size, int headroom) {
 		readbuf[i] = readbuf[i+lastPacket];
 	}
 	m->setRecvBufLen(readbuflen - lastPacket);
-	rx_pkt_count += lastPacket;
-	rx_pkt_bytes += used;
+	recv_cnt += lastPacket;
+	recv_bytes += used;
 	return ret;
 }
 
-static int uidcnt_ = 0;
-static int send_cnt = 0;
-static size_t sent_bytes = 0;
 /**
  * @brief Sends a packet down a layer
  * 
