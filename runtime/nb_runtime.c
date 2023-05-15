@@ -112,7 +112,6 @@ static void nb__cycle_connections(void) {
 
 unsigned long long nb__time_now = -1;
 void nb__main_loop_step(void) {
-  fprintf(stdout, "in main loop step\n");
   struct timespec tv;
   clock_gettime(CLOCK_MONOTONIC, &tv);
   nb__time_now = tv.tv_sec * 1000 + tv.tv_nsec / 1000000;

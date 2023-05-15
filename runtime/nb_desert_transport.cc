@@ -17,6 +17,11 @@
 
 static Nb_pModule *m;
 
+static int ll_p_rx = 0;
+static size_t ll_b_rx = 0;
+static int ll_p_tx = 0;
+static size_t ll_b_tx = 0;
+
 #define DESERT_MTU (1024)
 int nb__desert_simulate_out_of_order = 0;
 int nb__desert_simulate_packet_drop = 0;
@@ -33,13 +38,12 @@ void nb__desert_init(void *_m) {
 }
 
 void nb__desert_deinit(void) {
+	fprintf(stdout, "Finish, NB ll_p_tx = %i, ll_b_tx = %lu, ll_p_rx = %i, ll_b_rx = %lu\n", ll_p_tx, ll_b_tx, ll_p_rx, ll_b_rx);
 	return;
 }
 
 char nb__reuse_mtu_buffer[DESERT_MTU];
 
-static int rx_pkt_count = 0;
-static size_t rx_pkt_bytes = 0;
 /**
  * @brief polls packets from those read into nb_read_pkt_buf from the recv() function in nb_p.c
  * 
@@ -99,14 +103,12 @@ char* nb__poll_packet(int* size, int headroom) {
 		readbuf[i] = readbuf[i+lastPacket];
 	}
 	m->setRecvBufLen(readbuflen - lastPacket);
-	rx_pkt_count += lastPacket;
-	rx_pkt_bytes += used;
+	ll_p_rx += lastPacket;
+	ll_b_rx += used;
 	return ret;
 }
 
 static int uidcnt_ = 0;
-static int send_cnt = 0;
-static size_t sent_bytes = 0;
 /**
  * @brief Sends a packet down a layer
  * 
@@ -136,9 +138,8 @@ int nb__send_packet(char* buff, int len) {
 		assert(!memcmp((char*) pktdata_p, buff, len));
 		assert(len == p->datalen());
 		m->senddown(p,0);
-		send_cnt++;
-		sent_bytes += len;
-		// fprintf(stdout, "NB LLSend = %i, LLBytes = %lu, bytesTx'd = %lu\n", send_cnt, sent_bytes, sent_bytes - len);
+		ll_b_tx += len;
+		ll_p_tx++;
 		return 0;
 	}
 }
