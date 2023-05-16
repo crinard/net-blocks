@@ -38,6 +38,7 @@ struct dynamic_member {
 };
 
 enum class member_flags {
+	unaligned = 0,
 	aligned = 1
 };
 

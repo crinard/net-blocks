@@ -10,7 +10,7 @@ inorder_module inorder_module::instance;
 void inorder_module::init_module(void) {
 	conn_layout.register_member<builder::dyn_var<unsigned int>>("last_sent_sequence");
 	conn_layout.register_member<builder::dyn_var<unsigned int>>("last_recv_sequence");
-	net_packet.add_member("sequence_number", new generic_integer_member<unsigned int>((int)member_flags::aligned), 4);
+	net_packet.add_member("sequence_number", new generic_integer_member<unsigned int>((int)member_flags::unaligned), 4);
 
 	if (inorder_strategy == hold_forever) {
 		conn_layout.register_member<builder::dyn_var<void*[INORDER_BUFFER_SIZE]>>("inorder_buffer");

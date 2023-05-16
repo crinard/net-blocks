@@ -8,7 +8,7 @@ void signaling_module::init_module(void) {
 	framework::instance.register_module(this);	
 
 	// Field to communicate to with the reliable delivery module
-	net_packet.add_member("is_signaling", new generic_integer_member<int>((int)member_flags::aligned), 0);	
+	net_packet.add_member("is_signaling", new generic_integer_member<int>((int)member_flags::unaligned), 0);	
 }
 
 module::hook_status signaling_module::hook_establish(builder::dyn_var<connection_t*> c,

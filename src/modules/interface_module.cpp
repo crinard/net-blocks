@@ -9,7 +9,7 @@ interface_module interface_module::instance;
 
 void interface_module::init_module(void) {	
 	conn_layout.register_member<callback_t>("callback_f");	
-	net_packet.add_member("total_len", new generic_integer_member<int>((int)member_flags::aligned), 2);
+	net_packet.add_member("total_len", new generic_integer_member<int>((int)member_flags::unaligned), 2);
 }
 
 builder::dyn_var<connection_t*> interface_module::establish_impl(builder::dyn_var<char*> host_id, builder::dyn_var<unsigned int> app_id, 

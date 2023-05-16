@@ -12,8 +12,8 @@ void reliable_module::init_module(void) {
 	// This buffer helps us find waiting packets when ACKs arrive
 	conn_layout.register_member<builder::dyn_var<void*[REDELIVERY_BUFFER_SIZE]>>("redelivery_buffer");	
 	conn_layout.register_member<builder::dyn_var<unsigned int>>("first_unacked_seq");	
-	net_packet.add_member("ack_sequence_number", new generic_integer_member<unsigned int>((int)member_flags::aligned), 4);
-	net_packet.add_member("redelivery_timer", new generic_integer_member<unsigned long long>((int)member_flags::aligned), 0);
+	net_packet.add_member("ack_sequence_number", new generic_integer_member<unsigned int>((int)member_flags::unaligned), 4);
+	net_packet.add_member("redelivery_timer", new generic_integer_member<unsigned long long>((int)member_flags::unaligned), 0);
 	m_establish_depends = {&inorder_module::instance};
 	m_destablish_depends = {&inorder_module::instance};
 	m_send_depends = {&inorder_module::instance};

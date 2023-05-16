@@ -17,10 +17,10 @@
 
 static Nb_pModule *m;
 
-static int ll_p_rx = 0;
-static size_t ll_b_rx = 0;
-static int ll_p_tx = 0;
-static size_t ll_b_tx = 0;
+static int nb_ll_p_rx = 0;
+static size_t nb_ll_b_rx = 0;
+static int nb_ll_p_tx = 0;
+static size_t nb_ll_b_tx = 0;
 
 #define DESERT_MTU (1024)
 int nb__desert_simulate_out_of_order = 0;
@@ -34,11 +34,15 @@ void nb__desert_init(void *_m) {
 	// connect mode
 	m = (Nb_pModule*)_m;
 	m->setRecvBufLen(0);
+	nb_ll_b_tx = 0;
+	nb_ll_p_tx = 0;
+	nb_ll_b_rx = 0;
+	nb_ll_p_rx = 0;
 	return;
 }
 
 void nb__desert_deinit(void) {
-	fprintf(stdout, "Finish, NB ll_p_tx = %i, ll_b_tx = %lu, ll_p_rx = %i, ll_b_rx = %lu\n", ll_p_tx, ll_b_tx, ll_p_rx, ll_b_rx);
+	fprintf(stdout, "Finish, NB nb_ll_p_tx = %i, nb_ll_b_tx = %lu, nb_ll_p_rx = %i, nb_ll_b_rx = %lu\n", nb_ll_p_tx, nb_ll_b_tx, nb_ll_p_rx, nb_ll_b_rx);
 	return;
 }
 
@@ -103,8 +107,8 @@ char* nb__poll_packet(int* size, int headroom) {
 		readbuf[i] = readbuf[i+lastPacket];
 	}
 	m->setRecvBufLen(readbuflen - lastPacket);
-	ll_p_rx += lastPacket;
-	ll_b_rx += used;
+	nb_ll_p_rx += lastPacket;
+	nb_ll_b_rx += used;
 	return ret;
 }
 
@@ -117,15 +121,17 @@ static int uidcnt_ = 0;
  * @return int 0 or 1 always
  */
 int nb__send_packet(char* buff, int len) {
-	if (len > DESERT_MTU) { // Recurisvely call till done.
-		for (int i = 0; i * DESERT_MTU < len; i++) {
-			int thislen = DESERT_MTU;
-			if (i * DESERT_MTU + thislen > len) {
-				thislen = len - i * DESERT_MTU;
-			}
-			nb__send_packet(buff + i * DESERT_MTU, thislen);
-		}
-		return 0;
+	fprintf(stderr,"Send packet of size %i\n", len);
+	if (len > DESERT_MTU) { // Recurisvely call till done. TODO: THIS CAUSES REALLY NASTY THINGS!
+		fprintf(stderr, "REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE\n");
+		// for (int i = 0; i * DESERT_MTU < len; i++) {
+		// 	int thislen = DESERT_MTU;
+		// 	if (i * DESERT_MTU + thislen > len) {
+		// 		thislen = len - i * DESERT_MTU;
+		// 	}
+		// 	nb__send_packet(buff + i * DESERT_MTU, thislen);
+		// }
+		// return 0;
 	} else {
 		Packet *p = Packet::alloc();
 		hdr_cmn *ch = hdr_cmn::access(p);
@@ -138,8 +144,8 @@ int nb__send_packet(char* buff, int len) {
 		assert(!memcmp((char*) pktdata_p, buff, len));
 		assert(len == p->datalen());
 		m->senddown(p,0);
-		ll_b_tx += len;
-		ll_p_tx++;
+		nb_ll_b_tx += len;
+		nb_ll_p_tx++;
 		return 0;
 	}
 }
