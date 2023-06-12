@@ -2,9 +2,13 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <time.h>
+unsigned long long nb__time_now = -1;
 
+namespace NAMESPACE_NAME {
+
+extern "C" {
 struct data_queue_t* nb__new_data_queue(void) {
-	struct data_queue_t * q = malloc(sizeof(struct data_queue_t));
+	struct data_queue_t * q = (data_queue_t *) malloc(sizeof(struct data_queue_t));
 	q->current_elems = 0;
 	return q;
 }
@@ -19,7 +23,7 @@ void nb__insert_data_queue(struct data_queue_t* q, char* buff, int len) {
 }
 
 nb__accept_queue_t* nb__new_accept_queue(void) {
-	nb__accept_queue_t* q = malloc(sizeof(*q));
+	nb__accept_queue_t* q = (nb__accept_queue_t*) malloc(sizeof(*q));
 	q->current_elems = 0;
 	return q;
 }
@@ -111,7 +115,6 @@ static void nb__cycle_connections(void) {
 	}
 }
 
-unsigned long long nb__time_now = -1;
 void nb__main_loop_step(void) {
 	//nb__run_ingress_step();	
 	struct timespec tv;
@@ -150,8 +153,8 @@ void nb__debug_packet(char* p) {
 
 char nb__wildcard_host_identifier[HOST_IDENTIFIER_LEN] = {0};
 
-
-
+}
+} // NAMESPACE_NAME
 unsigned long long nb__get_time_ms_now(void) {
 	if (nb__time_now == -1) {
 		struct timespec tv;

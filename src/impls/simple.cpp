@@ -13,8 +13,9 @@
 
 using namespace net_blocks;
 
-static void generate_headers(void) {
+static void generate_headers(std::string name) {
 	std::cout << "#include \"nb_runtime.h\"" << std::endl;
+	std::cout << "namespace " << name << " { " << std::endl;
 }
 
 static builder::dyn_var<connection_t*> establish_wrapper(builder::dyn_var<char*> h, builder::dyn_var<unsigned int> app, 
@@ -68,17 +69,19 @@ static void generate_net_init(void) {
 	block::c_code_generator::generate_code(ast, std::cout);	
 }
 
-static void generate_connection_layout(std::string fname) {
+static void generate_connection_layout(std::string fname, std::string name) {
 	std::ofstream hoss(fname);
 	hoss << "#pragma once" << std::endl;
 	hoss << "#include \"nb_data_queue.h\"" << std::endl;
+	hoss << "namespace " << name << " {" << std::endl; 
 	conn_layout.generate_struct_decl(hoss, "nb__connection_t");
 	net_state.generate_struct_decl(hoss, "nb__net_state_t");
+	hoss << "}" << std::endl;
 	hoss.close();
 }
 
 int main(int argc, char* argv[]) {
-	if (argc < 2) {
+	if (argc < 3) {
 		std::cerr << "Usage: " << argv[0] << ": <gen header file>" << std::endl;
 		return -1;	
 	}	
@@ -104,8 +107,8 @@ int main(int argc, char* argv[]) {
 	net_packet.fix_layout();
 	net_packet.print_layout(std::cerr);
 	
-	generate_connection_layout(argv[1]);
-	generate_headers();
+	generate_connection_layout(argv[1], argv[2]);
+	generate_headers(argv[2]);
 
 	generate_net_init();
 	generate_establish();		
@@ -114,6 +117,6 @@ int main(int argc, char* argv[]) {
 	generate_ingress_step();
 
 	reliable_module::instance.gen_timer_callback(std::cout);
-
+	std::cout << "}" << std::endl;
 	return 0;
 }

@@ -31,9 +31,7 @@ module::hook_status reliable_module::hook_establish(builder::dyn_var<connection_
 	return module::hook_status::HOOK_CONTINUE;
 }
 
-
 static builder::dyn_var<void(timer_t*, void*, unsigned long long)> redelivery_timer_callback = builder::as_global("nb__reliable_redelivery_timer_cb");
-
 
 static void redelivery_cb(builder::dyn_var<runtime::timer_t*> t, builder::dyn_var<void*> param, 
 		builder::dyn_var<unsigned long long> to) {

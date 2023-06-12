@@ -79,30 +79,30 @@ $(LIBRARY): $(OBJS)
 	ar rv $(LIBRARY) $(OBJS)	
 	
 $(BUILD_DIR)/core/%.o: $(SRC_DIR)/core/%.cpp $(INCLUDES)
-	$(CXX) $(CFLAGS) $< -o $@ $(INCLUDE_FLAG) -c
+	$(CXX) $(CFLAGS) -DNAMESPACE_NAME=\"nb1\" $< -o $@ $(INCLUDE_FLAG) -c
 $(BUILD_DIR)/modules/%.o: $(SRC_DIR)/modules/%.cpp $(INCLUDES)
-	$(CXX) $(CFLAGS) $< -o $@ $(INCLUDE_FLAG) -c
+	$(CXX) $(CFLAGS) -DNAMESPACE_NAME=\"nb1\" $< -o $@ $(INCLUDE_FLAG) -c
 $(BUILD_DIR)/impls/%.o: $(SRC_DIR)/impls/%.cpp $(INCLUDES)
-	$(CXX) $(CFLAGS) $< -o $@ $(INCLUDE_FLAG) -c
+	$(CXX) $(CFLAGS) -DNAMESPACE_NAME=\"nb1\" $< -o $@ $(INCLUDE_FLAG) -c
 
 $(BUILD_DIR)/impls/simple: $(BUILD_DIR)/impls/simple.o $(LIBRARY)
-	$(CXX) -o $@ $< $(LINKER_FLAGS)
+	$(CXX) -DNAMESPACE_NAME=nb1 -o $@ $< $(LINKER_FLAGS)
 
 
 # Runtime objs
-$(SCRATCH_DIR)/nb_simple.c: $(BUILD_DIR)/impls/simple
-	$(BUILD_DIR)/impls/simple $(SCRATCH_DIR)/gen_headers.h > $(SCRATCH_DIR)/nb_simple.c
+$(SCRATCH_DIR)/nb_simple.cc: $(BUILD_DIR)/impls/simple
+	$(BUILD_DIR)/impls/simple $(SCRATCH_DIR)/gen_headers.h nb1 > $(SCRATCH_DIR)/nb_simple.cc
 
-$(BUILD_DIR)/runtime/nb_simple.o: $(SCRATCH_DIR)/nb_simple.c $(RUNTIME_INCLUDES)
-	$(CC) $(RCFLAGS) $(SCRATCH_DIR)/nb_simple.c -o $(BUILD_DIR)/runtime/nb_simple.o -c -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
-
-
-$(BUILD_DIR)/runtime/nb_runtime_simple.o: $(RUNTIME_DIR)/nb_runtime.c $(RUNTIME_INCLUDES) $(SCRATCH_DIR)/nb_simple.c
-	$(CC) $(RCFLAGS) -o $@ $< -c -I $(SCRATCH_DIR) -I $(RUNTIME_DIR)
+$(BUILD_DIR)/runtime/nb_simple.o: $(SCRATCH_DIR)/nb_simple.cc $(RUNTIME_INCLUDES)
+	$(CXX) $(RCFLAGS) -fpermissive -DNAMESPACE_NAME=nb1 $(SCRATCH_DIR)/nb_simple.cc -o $(BUILD_DIR)/runtime/nb_simple.o -c -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
 
 
-$(BUILD_DIR)/runtime/nb_timer.o: $(RUNTIME_DIR)/nb_timer.c $(RUNTIME_INCLUDES)
-	$(CC) $(RCFLAGS) -o $@ $< -c -I $(SCRATCH_DIR) -I $(RUNTIME_DIR)
+$(BUILD_DIR)/runtime/nb_runtime_simple.o: $(RUNTIME_DIR)/nb_runtime.cc $(RUNTIME_INCLUDES) $(SCRATCH_DIR)/nb_simple.cc
+	$(CXX) $(RCFLAGS) -DNAMESPACE_NAME=nb1 -fpermissive -o $@ $< -c -I $(SCRATCH_DIR) -I $(RUNTIME_DIR)
+
+
+$(BUILD_DIR)/runtime/nb_timer.o: $(RUNTIME_DIR)/nb_timer.cc $(RUNTIME_INCLUDES)
+	$(CXX) $(RCFLAGS) -DNAMESPACE_NAME=nb1 -fpermissive -o $@ $< -c -I $(SCRATCH_DIR) -I $(RUNTIME_DIR)
 
 
 $(BUILD_DIR)/runtime/nb_mlx5_transport.o: $(RUNTIME_DIR)/nb_mlx5_transport.cc $(RUNTIME_INCLUDES)
@@ -128,9 +128,9 @@ simple_network_test: mlx5_runtime $(SIMPLE_RUNTIME_OBJS)
 	
 .PHONY: simple_test
 simple_test: executables $(SIMPLE_RUNTIME_OBJS)
-	$(CC) $(RCFLAGS) -c $(TEST_DIR)/test_simple/server.c -o $(BUILD_DIR)/test/simple_test/server.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
-	$(CC) $(RCFLAGS) -c $(TEST_DIR)/test_simple/client.c -o $(BUILD_DIR)/test/simple_test/client.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
-	$(CC) $(RCFLAGS) -c $(RUNTIME_DIR)/nb_ipc_transport.c -o $(BUILD_DIR)/runtime/nb_ipc_transport.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
+	$(CXX) $(RCFLAGS) -c -DNAMESPACE_NAME=nb1 $(TEST_DIR)/test_simple/server.cc -o $(BUILD_DIR)/test/simple_test/server.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
+	$(CXX) $(RCFLAGS) -c -DNAMESPACE_NAME=nb1 $(TEST_DIR)/test_simple/client.cc -o $(BUILD_DIR)/test/simple_test/client.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
+	$(CC) $(RCFLAGS) -c -DNAMESPACE_NAME=nb1 -fpermissive $(RUNTIME_DIR)/nb_ipc_transport.cc -o $(BUILD_DIR)/runtime/nb_ipc_transport.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
 	$(CC) $(SIMPLE_RUNTIME_OBJS) $(BUILD_DIR)/test/simple_test/server.o $(BUILD_DIR)/runtime/nb_ipc_transport.o -o $(BUILD_DIR)/test/simple_server
 	$(CC) $(SIMPLE_RUNTIME_OBJS) $(BUILD_DIR)/test/simple_test/client.o $(BUILD_DIR)/runtime/nb_ipc_transport.o -o $(BUILD_DIR)/test/simple_client
 

@@ -39,7 +39,7 @@ char* nb__request_send_buffer(void) {
 	msgbuffer* buffer = get_next_send_buffer();
 	return buffer->buffer;
 }
-void* nb__return_send_buffer(char*) {
+void nb__return_send_buffer(char*) {
 	// This implementation is empty
 	// We have enough buffers and we assume that a 
 	// buffer is returned before it is used again

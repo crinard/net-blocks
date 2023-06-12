@@ -4,6 +4,9 @@
 #include <string.h>
 #include "gen_headers.h"
 #include "nb_timer.h"
+extern unsigned long long nb__get_time_ms_now(void);
+
+namespace NAMESPACE_NAME {
 #ifdef __cplusplus 
 extern "C" {
 #endif
@@ -41,7 +44,7 @@ void nb__ipc_init(const char* sock_path, int mode);
 void nb__ipc_deinit();
 void nb__mlx5_init(void);
 char* nb__request_send_buffer(void);
-void* nb__return_send_buffer(char*);
+void nb__return_send_buffer(char*);
 
 
 // Generated protocol API
@@ -70,9 +73,8 @@ extern nb__net_state_t* nb__net_state;
 extern char nb__wildcard_host_identifier[];
 
 
-extern unsigned long long nb__get_time_ms_now(void);
 #ifdef __cplusplus 
 }
 #endif
-
+}
 #endif

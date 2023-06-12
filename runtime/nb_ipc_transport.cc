@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+
+extern "C" {
 static int ipc_socket;
 
 #define IPC_MTU (1024)
@@ -114,6 +116,7 @@ int nb__send_packet(char* buff, int len) {
 char* nb__request_send_buffer(void) {
 	return malloc(IPC_MTU);
 }
-void* nb__return_send_buffer(char* p) {
+void nb__return_send_buffer(char* p) {
 	free(p);
+}
 }
