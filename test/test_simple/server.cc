@@ -3,7 +3,6 @@
 #include <stdio.h>
 
 #define SERVER_MSG ("Hello from server")
-using namespace NAMESPACE_NAME;
 
 char client_id[] = {0, 0, 0, 0, 0, 2};
 char server_id[] = {0, 0, 0, 0, 0, 1};

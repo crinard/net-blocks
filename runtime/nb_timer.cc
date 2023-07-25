@@ -3,7 +3,9 @@
 #include <stdlib.h>
 extern unsigned long long nb__get_time_ms_now(void);
 
+#ifdef NAMESPACE_NAME
 namespace NAMESPACE_NAME {
+  #endif // NAMESPACE_NAME
 nb__timer nb__allocated_timers[MAX_TIMER_ALLOCS];
 nb__timer* nb__timer_free_list = NULL;
 
@@ -80,4 +82,6 @@ void nb__check_timers(void) {
   }
   nb__last_timer_checked = t_now;
 }
-}  // namespace NAMESPACE_NAME
+#ifdef NAMESPACE_NAME
+}  
+#endif // namespace NAMESPACE_NAME

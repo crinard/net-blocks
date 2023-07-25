@@ -4,9 +4,12 @@
 #include <time.h>
 unsigned long long nb__time_now = -1;
 
+#ifdef NAMESPACE_NAME
 namespace NAMESPACE_NAME {
-
+#endif // NAMESPACE_NAME
+#ifdef __cplusplus
 extern "C" {
+#endif // __cplusplus
 struct data_queue_t* nb__new_data_queue(void) {
 	struct data_queue_t * q = (data_queue_t *) malloc(sizeof(struct data_queue_t));
 	q->current_elems = 0;
@@ -152,9 +155,12 @@ void nb__debug_packet(char* p) {
 }
 
 char nb__wildcard_host_identifier[HOST_IDENTIFIER_LEN] = {0};
-
+#ifdef __cplusplus
 }
+#endif // __cplusplus
+#ifdef NAMESPACE_NAME
 } // NAMESPACE_NAME
+#endif // NAMESPACE_NAME
 unsigned long long nb__get_time_ms_now(void) {
 	if (nb__time_now == -1) {
 		struct timespec tv;
@@ -162,4 +168,5 @@ unsigned long long nb__get_time_ms_now(void) {
 		nb__time_now = tv.tv_sec * 1000 + tv.tv_nsec / 1000000;
 	}
 	return nb__time_now;
+
 }

@@ -1,6 +1,9 @@
 #ifndef NB_TIMER_IMPL_H
 #define NB_TIMER_IMPL_H
+
+#ifdef NAMESPACE_NAME
 namespace NAMESPACE_NAME {
+#endif // NAMESPACE_NAME
 // Can define timers upto a second away
 #define MAX_TIMER_SLOTS (1000)
 #define MAX_TIMER_ALLOCS (1024)
@@ -32,5 +35,7 @@ extern void nb__remove_timer(nb__timer*);
 extern void nb__init_timers(void);
 
 extern void nb__check_timers(void);
+#ifdef NAMESPACE_NAME
 }
-#endif
+#endif // NAMESPACE_NAME
+#endif // NB_TIMER_IMPL_H

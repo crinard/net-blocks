@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <unistd.h>
 #define CLIENT_MSG ("Hello from client")
-
+#ifdef NAMESPACE_NAME
+using namespace NAMESPACE_NAME
+#endif // NAMESPACE_NAME;
 char client_id[] = {0, 0, 0, 0, 0, 2};
 char server_id[] = {0, 0, 0, 0, 0, 1};
 

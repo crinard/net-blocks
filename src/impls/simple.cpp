@@ -15,7 +15,9 @@ using namespace net_blocks;
 
 static void generate_headers(std::string name) {
 	std::cout << "#include \"nb_runtime.h\"" << std::endl;
+	#ifdef NAMESPACE_NAME
 	std::cout << "namespace " << name << " { " << std::endl;
+	#endif // NAMESPACE_NAME
 }
 
 static builder::dyn_var<connection_t*> establish_wrapper(builder::dyn_var<char*> h, builder::dyn_var<unsigned int> app, 
@@ -73,10 +75,14 @@ static void generate_connection_layout(std::string fname, std::string name) {
 	std::ofstream hoss(fname);
 	hoss << "#pragma once" << std::endl;
 	hoss << "#include \"nb_data_queue.h\"" << std::endl;
+	#ifdef NAMESPACE_NAME
 	hoss << "namespace " << name << " {" << std::endl; 
+	#endif // NAMESPACE_NAME
 	conn_layout.generate_struct_decl(hoss, "nb__connection_t");
 	net_state.generate_struct_decl(hoss, "nb__net_state_t");
+	#ifdef NAMESPACE_NAME
 	hoss << "}" << std::endl;
+	#endif // NAMESPACE_NAME
 	hoss.close();
 }
 
@@ -117,6 +123,8 @@ int main(int argc, char* argv[]) {
 	generate_ingress_step();
 
 	reliable_module::instance.gen_timer_callback(std::cout);
+	#ifdef NAMESPACE_NAME
 	std::cout << "}" << std::endl;
+	#endif // NAMESPACE_NAME
 	return 0;
 }

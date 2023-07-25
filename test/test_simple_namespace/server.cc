@@ -1,7 +1,11 @@
 #include "nb_runtime.h"
-#include <stdio.h>
 #include <unistd.h>
-#define CLIENT_MSG ("Hello from client")
+#include <stdio.h>
+
+#define SERVER_MSG ("Hello from server")
+#ifdef NAMESPACE_NAME
+using namespace NAMESPACE_NAME
+#endif // NAMESPACE_NAME;
 
 char client_id[] = {0, 0, 0, 0, 0, 2};
 char server_id[] = {0, 0, 0, 0, 0, 1};
@@ -12,20 +16,20 @@ static void callback(int event, nb__connection_t * c) {
 		char buff[65];
 		int len = nb__read(c, buff, 64);
 		buff[len] = 0;	
+
 		printf("Received = %s\n", buff);	
+		nb__send(c, SERVER_MSG, sizeof(SERVER_MSG));
 		running = 0;
 	}
 }
 
 int main(int argc, char* argv[]) {
-	nb__ipc_init("/tmp/ipc_socket", 0);
+	nb__ipc_init("/tmp/ipc_socket", 1);
 	printf("IPC initialized\n");
 	nb__net_init();
-	memcpy(nb__my_host_id, client_id, 6);
+	memcpy(nb__my_host_id, server_id, 6);
 
-	nb__connection_t * conn = nb__establish(server_id, 8080, 8081, callback);
-	
-	nb__send(conn, CLIENT_MSG, sizeof(CLIENT_MSG));
+	nb__connection_t * conn = nb__establish(client_id, 8081, 8080, callback);
 
 	while (running) {
 		nb__main_loop_step();
@@ -33,5 +37,4 @@ int main(int argc, char* argv[]) {
 	}
 	nb__destablish(conn);
 	return 0;
-	
 }

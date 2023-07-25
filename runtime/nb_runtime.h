@@ -5,8 +5,9 @@
 #include "gen_headers.h"
 #include "nb_timer.h"
 extern unsigned long long nb__get_time_ms_now(void);
-
+#ifdef NAMESPACE_NAME
 namespace NAMESPACE_NAME {
+#endif // NAMESPACE_NAME
 #ifdef __cplusplus 
 extern "C" {
 #endif
@@ -76,5 +77,8 @@ extern char nb__wildcard_host_identifier[];
 #ifdef __cplusplus 
 }
 #endif
-}
+#ifdef NAMESPACE_NAME
+} 
+#endif // NAMESPACE_NAME
+
 #endif
