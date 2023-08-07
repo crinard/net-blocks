@@ -36,18 +36,18 @@ BUILDIT_LIBRARY_PATH=$(BUILDIT_DIR)/build
 LIBRARY_NAME=net_blocks
 DEBUG ?= 0
 ifeq ($(DEBUG),1)
-CFLAGS=-g -std=c++11 -O0
-LINKER_FLAGS= -rdynamic  -g -L$(BUILDIT_LIBRARY_PATH) -L$(BUILD_DIR) -l$(LIBRARY_NAME) -l$(BUILDIT_LIBRARY_NAME)
+CFLAGS=-g -std=c++11 -O0 -fPIC
+LINKER_FLAGS= -rdynamic -fPIC -g -L$(BUILDIT_LIBRARY_PATH) -L$(BUILD_DIR) -l$(LIBRARY_NAME) -l$(BUILDIT_LIBRARY_NAME)
 else
-CFLAGS=-std=c++11 -O3
-LINKER_FLAGS=-rdynamic  -L$(BUILDIT_LIBRARY_PATH) -L$(BUILD_DIR) -l$(LIBRARY_NAME) -l$(BUILDIT_LIBRARY_NAME)
+CFLAGS=-std=c++11 -O3 -fPIC
+LINKER_FLAGS=-rdynamic -fPIC -L$(BUILDIT_LIBRARY_PATH) -L$(BUILD_DIR) -l$(LIBRARY_NAME) -l$(BUILDIT_LIBRARY_NAME)
 endif
 
 
 ifeq ($(DEBUG),1)
-RCFLAGS=-g
+RCFLAGS=-g -fPIC
 else
-RCFLAGS=-O3
+RCFLAGS=-O3 -fPIC
 endif
 
 
@@ -55,7 +55,7 @@ endif
 
 LIBRARY=$(BUILD_DIR)/lib$(LIBRARY_NAME).a
 
-CFLAGS+=-Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wmissing-declarations -Woverloaded-virtual -pedantic-errors -Wno-deprecated -Wdelete-non-virtual-dtor -Werror -fno-move-loop-invariants
+CFLAGS+=-Wall -fPIC -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wmissing-declarations -Woverloaded-virtual -pedantic-errors -Wno-deprecated -Wdelete-non-virtual-dtor -Werror -fno-move-loop-invariants
 
 all: executables $(LIBRARY)
 
@@ -79,14 +79,14 @@ $(LIBRARY): $(OBJS)
 	ar rv $(LIBRARY) $(OBJS)	
 	
 $(BUILD_DIR)/core/%.o: $(SRC_DIR)/core/%.cpp $(INCLUDES)
-	$(CXX) $(CFLAGS) -DNAMESPACE_NAME=\"nb1\" $< -o $@ $(INCLUDE_FLAG) -c
+	$(CXX) $(CFLAGS) -Dnb1=\"nb1\" $< -o $@ $(INCLUDE_FLAG) -c
 $(BUILD_DIR)/modules/%.o: $(SRC_DIR)/modules/%.cpp $(INCLUDES)
-	$(CXX) $(CFLAGS) -DNAMESPACE_NAME=\"nb1\" $< -o $@ $(INCLUDE_FLAG) -c
+	$(CXX) $(CFLAGS) -Dnb1=\"nb1\" $< -o $@ $(INCLUDE_FLAG) -c
 $(BUILD_DIR)/impls/%.o: $(SRC_DIR)/impls/%.cpp $(INCLUDES)
-	$(CXX) $(CFLAGS) -DNAMESPACE_NAME=\"nb1\" $< -o $@ $(INCLUDE_FLAG) -c
+	$(CXX) $(CFLAGS) -Dnb1=\"nb1\" $< -o $@ $(INCLUDE_FLAG) -c
 
 $(BUILD_DIR)/impls/simple: $(BUILD_DIR)/impls/simple.o $(LIBRARY)
-	$(CXX) -DNAMESPACE_NAME=nb1 -o $@ $< $(LINKER_FLAGS)
+	$(CXX) -Dnb1=nb1 -o $@ $< $(LINKER_FLAGS)
 
 
 # Runtime objs
@@ -94,15 +94,15 @@ $(SCRATCH_DIR)/nb_simple.cc: $(BUILD_DIR)/impls/simple
 	$(BUILD_DIR)/impls/simple $(SCRATCH_DIR)/gen_headers.h nb1 > $(SCRATCH_DIR)/nb_simple.cc
 
 $(BUILD_DIR)/runtime/nb_simple.o: $(SCRATCH_DIR)/nb_simple.cc $(RUNTIME_INCLUDES)
-	$(CXX) $(RCFLAGS) -fpermissive -DNAMESPACE_NAME=nb1 $(SCRATCH_DIR)/nb_simple.cc -o $(BUILD_DIR)/runtime/nb_simple.o -c -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
+	$(CXX) $(RCFLAGS) -fpermissive -Dnb1=nb1 $(SCRATCH_DIR)/nb_simple.cc -o $(BUILD_DIR)/runtime/nb_simple.o -c -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
 
 
 $(BUILD_DIR)/runtime/nb_runtime_simple.o: $(RUNTIME_DIR)/nb_runtime.cc $(RUNTIME_INCLUDES) $(SCRATCH_DIR)/nb_simple.cc
-	$(CXX) $(RCFLAGS) -DNAMESPACE_NAME=nb1 -fpermissive -o $@ $< -c -I $(SCRATCH_DIR) -I $(RUNTIME_DIR)
+	$(CXX) $(RCFLAGS) -Dnb1=nb1 -fpermissive -o $@ $< -c -I $(SCRATCH_DIR) -I $(RUNTIME_DIR)
 
 
 $(BUILD_DIR)/runtime/nb_timer.o: $(RUNTIME_DIR)/nb_timer.cc $(RUNTIME_INCLUDES)
-	$(CXX) $(RCFLAGS) -DNAMESPACE_NAME=nb1 -fpermissive -o $@ $< -c -I $(SCRATCH_DIR) -I $(RUNTIME_DIR)
+	$(CXX) $(RCFLAGS) -Dnb1=nb1 -fpermissive -o $@ $< -c -I $(SCRATCH_DIR) -I $(RUNTIME_DIR)
 
 
 $(BUILD_DIR)/runtime/nb_mlx5_transport.o: $(RUNTIME_DIR)/nb_mlx5_transport.cc $(RUNTIME_INCLUDES)
@@ -128,9 +128,9 @@ simple_network_test: mlx5_runtime $(SIMPLE_RUNTIME_OBJS)
 	
 .PHONY: simple_test
 simple_test: executables $(SIMPLE_RUNTIME_OBJS)
-	$(CXX) $(RCFLAGS) -c -DNAMESPACE_NAME=nb1 $(TEST_DIR)/test_simple/server.cc -o $(BUILD_DIR)/test/simple_test/server.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
-	$(CXX) $(RCFLAGS) -c -DNAMESPACE_NAME=nb1 $(TEST_DIR)/test_simple/client.cc -o $(BUILD_DIR)/test/simple_test/client.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
-	$(CC) $(RCFLAGS) -c -DNAMESPACE_NAME=nb1 -fpermissive $(RUNTIME_DIR)/nb_ipc_transport.cc -o $(BUILD_DIR)/runtime/nb_ipc_transport.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
+	$(CXX) $(RCFLAGS) -c -Dnb1=nb1 $(TEST_DIR)/test_simple/server.cc -o $(BUILD_DIR)/test/simple_test/server.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
+	$(CXX) $(RCFLAGS) -c -Dnb1=nb1 $(TEST_DIR)/test_simple/client.cc -o $(BUILD_DIR)/test/simple_test/client.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
+	$(CC) $(RCFLAGS) -c -Dnb1=nb1 -fpermissive $(RUNTIME_DIR)/nb_ipc_transport.cc -o $(BUILD_DIR)/runtime/nb_ipc_transport.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
 	$(CC) $(SIMPLE_RUNTIME_OBJS) $(BUILD_DIR)/test/simple_test/server.o $(BUILD_DIR)/runtime/nb_ipc_transport.o -o $(BUILD_DIR)/test/simple_server
 	$(CC) $(SIMPLE_RUNTIME_OBJS) $(BUILD_DIR)/test/simple_test/client.o $(BUILD_DIR)/runtime/nb_ipc_transport.o -o $(BUILD_DIR)/test/simple_client
 
@@ -157,6 +157,12 @@ simple_test_reliable: executables $(SIMPLE_RUNTIME_OBJS)
 	$(CC) $(RCFLAGS) -c $(RUNTIME_DIR)/nb_ipc_transport.c -o $(BUILD_DIR)/runtime/nb_ipc_transport.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
 	$(CC) $(SIMPLE_RUNTIME_OBJS) $(BUILD_DIR)/test/simple_test_reliable/server.o $(BUILD_DIR)/runtime/nb_ipc_transport.o -o $(BUILD_DIR)/test/simple_reliable_server
 	$(CC) $(SIMPLE_RUNTIME_OBJS) $(BUILD_DIR)/test/simple_test_reliable/client.o $(BUILD_DIR)/runtime/nb_ipc_transport.o -o $(BUILD_DIR)/test/simple_reliable_client
+
+simple_desert: $(BASE_DIR)/../.build/libmynb_p.a
+
+$(BASE_DIR)/../.build/libmynb_p.a: executables $(SIMPLE_RUNTIME_OBJS) $(RUNTIME_DIR)/nb_desert_transport.cc
+	$(CXX) $(RCFLAGS) -c -Dnb1=nb1 $(RUNTIME_DIR)/nb_desert_transport.cc -o $(BASE_DIR)/../.build/nb_desert_transport.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR) -I $(BASE_DIR)/.. -I $(BASE_DIR)/../../../../.unpacked_folder/nsmiracle-1.1.2/nsmiracle/ -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34/common -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34 -I $(BASE_DIR)/../../../../.unpacked_folder/tclcl-1.20 -I $(BASE_DIR)/../../../../.unpacked_folder/tcl-8.4.19/generic -I $(BASE_DIR)/../../../../.unpacked_folder/otcl-1.14 -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34/mobile -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34/trace -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34/tcp -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34/apps
+	ar crv $(BASE_DIR)/../.build/libmynb_p.a $(SIMPLE_RUNTIME_OBJS)  $(BASE_DIR)/../.build/nb_desert_transport.o
 
 simple_test_run: simple_test
 	$(BUILD_DIR)/test/simple_server &
