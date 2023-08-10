@@ -7,6 +7,7 @@ SCRATCH_DIR?=$(BASE_DIR)/scratch
 TEST_DIR?=$(BASE_DIR)/test
 INCLUDE_DIR=$(BASE_DIR)/include
 BUILDIT_DIR?=$(BASE_DIR)/buildit
+DESERT_PATH=$(BASE_DIR)/../../../../../DESERT_buildCopy_LOCAL/.buildHost
 
 INCLUDES=$(wildcard $(INCLUDE_DIR)/*.h) $(wildcard $(INCLUDE_DIR)/*/*.h) $(wildcard $(BUILDIT_DIR)/include/*.h) $(wildcard $(BUILDIT_DIR)/include/*/*.h)
 RUNTIME_INCLUDE=$(wildcard $(RUNTIME_DIR)/*.h) 
@@ -162,7 +163,7 @@ simple_test_reliable: executables $(SIMPLE_RUNTIME_OBJS)
 simple_desert: $(BASE_DIR)/../.build/libmynb_p.a
 
 $(BASE_DIR)/../.build/libmynb_p.a: executables $(SIMPLE_RUNTIME_OBJS) $(RUNTIME_DIR)/nb_desert_transport.cc
-	$(CXX) $(RCFLAGS) -c   $(RUNTIME_DIR)/nb_desert_transport.cc -o $(BASE_DIR)/../.build/nb_desert_transport.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR) -I $(BASE_DIR)/.. -I $(BASE_DIR)/../../../../.unpacked_folder/nsmiracle-1.1.2/nsmiracle/ -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34/common -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34 -I $(BASE_DIR)/../../../../.unpacked_folder/tclcl-1.20 -I $(BASE_DIR)/../../../../.unpacked_folder/tcl-8.4.19/generic -I $(BASE_DIR)/../../../../.unpacked_folder/otcl-1.14 -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34/mobile -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34/trace -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34/tcp -I $(BASE_DIR)/../../../../.unpacked_folder/ns-2.34/apps
+	$(CXX) $(RCFLAGS) -c   $(RUNTIME_DIR)/nb_desert_transport.cc -o $(BASE_DIR)/../.build/nb_desert_transport.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR) -I $(BASE_DIR)/.. -I $(DESERT_PATH)/nsmiracle-1.1.2/nsmiracle/ -I $(DESERT_PATH)/ns-2.34/common -I $(DESERT_PATH)/ns-2.34 -I $(DESERT_PATH)/tclcl-1.20 -I $(DESERT_PATH)/tcl-8.4.19/generic -I $(DESERT_PATH)/otcl-1.14 -I $(DESERT_PATH)/ns-2.34/mobile -I $(DESERT_PATH)/ns-2.34/trace -I $(DESERT_PATH)/ns-2.34/tcp -I $(DESERT_PATH)/ns-2.34/apps
 	ar crv $(BASE_DIR)/../.build/libmynb_p.a $(SIMPLE_RUNTIME_OBJS) $(BASE_DIR)/../.build/nb_desert_transport.o
 
 simple_test_run: simple_test
