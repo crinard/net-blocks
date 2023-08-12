@@ -7,6 +7,8 @@
 #include <unistd.h>
 
 #include <iostream>
+#include <queue>
+#include <utility>
 #include <vector>
 
 #include "module.h"
@@ -14,13 +16,23 @@
 #include "nb_runtime.h"
 #include "packet.h"
 #include "scheduler.h"
+#define IPC_MTU 1024
+
+static char* tto_sent_data;
+static int tto_sent_data_len;
+static bool tto_busy = false;
+static char* ott_sent_data;
+static int ott_sent_data_len;
+static bool ott_busy = false;
+
+static std::queue<std::pair<char*, int>> tto_queue;
+static std::queue<std::pair<char*, int>> ott_queue;
 namespace nb1 {
 static Nb_pModule* m;
 
-#define DESERT_MTU (1024)
 int nb__desert_simulate_out_of_order = 0;
 int nb__desert_simulate_packet_drop = 0;
-static char out_of_order_store[DESERT_MTU];
+static char out_of_order_store[IPC_MTU];
 
 static int out_of_order_len = 0;
 static int nb_ll_p_rx = 0;
@@ -50,7 +62,7 @@ void nb__desert_deinit(void) {
   return;
 }
 
-char nb__reuse_mtu_buffer[DESERT_MTU];
+char nb__reuse_mtu_buffer[IPC_MTU];
 
 /**
  * @brief polls packets from those read into nb_read_pkt_buf from the recv()
@@ -61,62 +73,15 @@ char nb__reuse_mtu_buffer[DESERT_MTU];
  * @return char*
  */
 char* nb__poll_packet(int* size, int headroom) {
-  size_t readbuflen = 10000;
-  // This holds packets from the application level recv() function, which just
-  // enques them into the read buffer.
-  Packet** readbuf = m->getRecvBuf(&readbuflen);
-  if (readbuflen > READ_BUF_LEN) {
-    assert(false);
-  }                   // If this ain't true we have problems.
-  int totalSize = 0;  // Combined size of the data portion of all the packets.
-  int lastPacket = 0;
-  for (int i = 0; i < readbuflen; i++) {
-    Packet* p = readbuf[i];
-    int packetLen = p->datalen();
-    if (totalSize + packetLen > DESERT_MTU) {
-      break;
-    }
-    totalSize += packetLen;
-    lastPacket = i + 1;
+  if (tto_busy) {
+    char* ret = (char*)malloc(IPC_MTU + headroom);
+    *size = tto_sent_data_len;
+    memcpy(ret + headroom, tto_sent_data, tto_sent_data_len);
+    tto_busy = false;
+    free(tto_sent_data);
+    return ret;
   }
-
-  char* scratch[DESERT_MTU];
-  if (totalSize == 0) {
-    for (int i = 0; i < readbuflen; i++) {
-      Packet* p = readbuf[i];
-      Packet::free(p);
-    }
-    *size = 0;
-    m->setRecvBufLen(0);
-    return NULL;
-  }
-  size_t used = 0;
-  // Take from the top and copy down.
-  for (size_t i = 0; (i < lastPacket); i++) {
-    Packet* p = readbuf[i];
-    if (p->datalen() == 0) {
-      Packet::free(p);
-      continue;
-    }
-    size_t len = p->datalen();
-    memcpy(scratch + used, (char*)p->accessdata(), len);
-    Packet::free(p);
-    used += len;
-  }
-  assert(totalSize <= DESERT_MTU);
-  char* ret = (char*)malloc(DESERT_MTU + headroom);
-  memcpy(ret + headroom, scratch, DESERT_MTU);
-  *size = totalSize;
-  scratch[used] = 0;  // Null terminate the string for debugging purposes.
-  // Reset the readbuf
-  for (size_t i = 0; (i < readbuflen - lastPacket); i++) {
-    // Copy the packet at the top of the buffer to the first idx ()
-    readbuf[i] = readbuf[i + lastPacket];
-  }
-  m->setRecvBufLen(readbuflen - lastPacket);
-  nb_ll_p_rx += lastPacket;
-  nb_ll_b_rx += used;
-  return ret;
+  return NULL;
 }
 
 static int uidcnt_ = 0;
@@ -129,41 +94,42 @@ static int send_cnt = 0;
  * @return int 0 or 1 always
  */
 int nb__send_packet(char* buff, int len) {
-  if (len > DESERT_MTU) {  // Recurisvely call till done.
-    for (int i = 0; i * DESERT_MTU < len; i++) {
-      int thislen = DESERT_MTU;
-      if (i * DESERT_MTU + thislen > len) {
-        thislen = len - i * DESERT_MTU;
-      }
-      nb__send_packet(buff + i * DESERT_MTU, thislen);
-    }
-    return 0;
-  } else {
-    Packet* p = Packet::alloc();
-    hdr_cmn* ch = hdr_cmn::access(p);
-    ch->uid() = uidcnt_++;
-    ch->ptype() = 2;  // CBR style header Fwiw.
-    ch->size() = len;
-    p->allocdata(len);
-    unsigned char* pktdata_p = p->accessdata();
-    memcpy((char*)pktdata_p, buff, len);
-    assert(!memcmp((char*)pktdata_p, buff, len));
-    assert(len == p->datalen());
-    m->senddown(p, 0);
-    nb_ll_b_tx += len;
-    nb_ll_p_tx++;
-    return 0;
-  }
+  char* tmp = (char*)malloc(len);
+  memcpy(tmp, buff, len);
+  ott_queue.push(std::make_pair(tmp, len));
+  // Add to queue & return
+  if (ott_busy) return 0;
+  ott_busy = true;
+  std::pair<char*, int> pa = ott_queue.front();
+  ott_queue.pop();
+  ott_sent_data = pa.first;
+  int l = pa.second;
+  ott_sent_data_len = l;
+
+  // DESERT shenanigans
+  Packet* p = Packet::alloc(l);
+  hdr_cmn* ch = hdr_cmn::access(p);
+  ch->uid() = uidcnt_++;
+  ch->ptype() = 2;  // CBR style header Fwiw.
+  ch->size() = sizeof(hdr_cmn) + l;
+
+  unsigned char* pktdata_p = p->accessdata();
+  memcpy((char*)pktdata_p, ott_sent_data, l);
+  assert(l == p->datalen());
+  m->senddown(p, 0);
+  nb_ll_b_tx += l;
+  nb_ll_p_tx++;
+  return 0;
 }
 }  // namespace nb1
 
 namespace nb2 {
 static Nb_pModule* m;
 
-#define DESERT_MTU (1024)
+#define IPC_MTU (1024)
 int nb__desert_simulate_out_of_order = 0;
 int nb__desert_simulate_packet_drop = 0;
-static char out_of_order_store[DESERT_MTU];
+static char out_of_order_store[IPC_MTU];
 
 static int out_of_order_len = 0;
 static int nb_ll_p_rx = 0;
@@ -193,7 +159,7 @@ void nb__desert_deinit(void) {
   return;
 }
 
-char nb__reuse_mtu_buffer[DESERT_MTU];
+char nb__reuse_mtu_buffer[IPC_MTU];
 
 /**
  * @brief polls packets from those read into nb_read_pkt_buf from the recv()
@@ -204,62 +170,15 @@ char nb__reuse_mtu_buffer[DESERT_MTU];
  * @return char*
  */
 char* nb__poll_packet(int* size, int headroom) {
-  size_t readbuflen = 10000;
-  // This holds packets from the application level recv() function, which just
-  // enques them into the read buffer.
-  Packet** readbuf = m->getRecvBuf(&readbuflen);
-  if (readbuflen > READ_BUF_LEN) {
-    assert(false);
-  }                   // If this ain't true we have problems.
-  int totalSize = 0;  // Combined size of the data portion of all the packets.
-  int lastPacket = 0;
-  for (int i = 0; i < readbuflen; i++) {
-    Packet* p = readbuf[i];
-    int packetLen = p->datalen();
-    if (totalSize + packetLen > DESERT_MTU) {
-      break;
-    }
-    totalSize += packetLen;
-    lastPacket = i + 1;
+  if (ott_busy) {
+    char* ret = (char*)malloc(IPC_MTU + headroom);
+    *size = ott_sent_data_len;
+    memcpy(ret + headroom, ott_sent_data, ott_sent_data_len);
+    ott_busy = false;
+    free(ott_sent_data);
+    return ret;
   }
-
-  char* scratch[DESERT_MTU];
-  if (totalSize == 0) {
-    for (int i = 0; i < readbuflen; i++) {
-      Packet* p = readbuf[i];
-      Packet::free(p);
-    }
-    *size = 0;
-    m->setRecvBufLen(0);
-    return NULL;
-  }
-  size_t used = 0;
-  // Take from the top and copy down.
-  for (size_t i = 0; (i < lastPacket); i++) {
-    Packet* p = readbuf[i];
-    if (p->datalen() == 0) {
-      Packet::free(p);
-      continue;
-    }
-    size_t len = p->datalen();
-    memcpy(scratch + used, (char*)p->accessdata(), len);
-    Packet::free(p);
-    used += len;
-  }
-  assert(totalSize <= DESERT_MTU);
-  char* ret = (char*)malloc(DESERT_MTU + headroom);
-  memcpy(ret + headroom, scratch, DESERT_MTU);
-  *size = totalSize;
-  scratch[used] = 0;  // Null terminate the string for debugging purposes.
-  // Reset the readbuf
-  for (size_t i = 0; (i < readbuflen - lastPacket); i++) {
-    // Copy the packet at the top of the buffer to the first idx ()
-    readbuf[i] = readbuf[i + lastPacket];
-  }
-  m->setRecvBufLen(readbuflen - lastPacket);
-  nb_ll_p_rx += lastPacket;
-  nb_ll_b_rx += used;
-  return ret;
+  return NULL;
 }
 
 static int uidcnt_ = 0;
@@ -272,34 +191,36 @@ static int send_cnt = 0;
  * @return int 0 or 1 always
  */
 int nb__send_packet(char* buff, int len) {
-  if (len > DESERT_MTU) {  // Recurisvely call till done.
-    for (int i = 0; i * DESERT_MTU < len; i++) {
-      int thislen = DESERT_MTU;
-      if (i * DESERT_MTU + thislen > len) {
-        thislen = len - i * DESERT_MTU;
-      }
-      nb__send_packet(buff + i * DESERT_MTU, thislen);
-    }
-    return 0;
-  } else {
-    Packet* p = Packet::alloc();
-    hdr_cmn* ch = hdr_cmn::access(p);
-    ch->uid() = uidcnt_++;
-    ch->ptype() = 2;  // CBR style header Fwiw.
-    ch->size() = len;
-    p->allocdata(len);
-    unsigned char* pktdata_p = p->accessdata();
-    memcpy((char*)pktdata_p, buff, len);
-    assert(!memcmp((char*)pktdata_p, buff, len));
-    assert(len == p->datalen());
-    m->senddown(p, 0);
-    nb_ll_b_tx += len;
-    nb_ll_p_tx++;
-    return 0;
-  }
+  char* tmp = (char*)malloc(len);
+  memcpy(tmp, buff, len);
+  tto_queue.push(std::make_pair(tmp, len));
+  // Add to queue & return
+  if (tto_busy) return 0;
+  tto_busy = true;
+  std::pair<char*, int> pa = tto_queue.front();
+  tto_queue.pop();
+  tto_sent_data = pa.first;
+  int l = pa.second;
+  tto_sent_data_len = l;
+
+  // DESERT shenanigans
+  Packet* p = Packet::alloc(l);
+  hdr_cmn* ch = hdr_cmn::access(p);
+  ch->uid() = uidcnt_++;
+  ch->ptype() = 2;  // CBR style header Fwiw.
+  ch->size() = sizeof(hdr_cmn) + l;
+
+  unsigned char* pktdata_p = p->accessdata();
+  memcpy((char*)pktdata_p, tto_sent_data, l);
+  assert(!memcmp((char*)pktdata_p, tto_sent_data, l));
+  assert(l == p->datalen());
+  m->senddown(p, 0);
+  nb_ll_b_tx += l;
+  nb_ll_p_tx++;
+  return 0;
 }
 
-char* nb__request_send_buffer(void) { return (char*)malloc(DESERT_MTU); }
+char* nb__request_send_buffer(void) { return (char*)malloc(IPC_MTU); }
 void nb__return_send_buffer(char* p) { free(p); }
 }  // namespace nb2
 

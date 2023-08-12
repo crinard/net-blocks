@@ -56,7 +56,7 @@ endif
 
 LIBRARY=$(BUILD_DIR)/lib$(LIBRARY_NAME).a
 
-CFLAGS+=-Wall -fPIC -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wmissing-declarations -Woverloaded-virtual -pedantic-errors -Wno-deprecated -Wdelete-non-virtual-dtor -Werror -fno-move-loop-invariants
+CFLAGS+=-Wall -fPIC -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -Wmissing-declarations -Woverloaded-virtual -pedantic-errors -Wno-deprecated -Wdelete-non-virtual-dtor -Werror -fno-move-loop-invariants -g
 
 all: executables $(LIBRARY)
 
