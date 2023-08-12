@@ -166,6 +166,17 @@ $(BASE_DIR)/../.build/libmynb_p.a: executables $(SIMPLE_RUNTIME_OBJS) $(RUNTIME_
 	$(CXX) $(RCFLAGS) -c   $(RUNTIME_DIR)/nb_desert_transport.cc -o $(BASE_DIR)/../.build/nb_desert_transport.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR) -I $(BASE_DIR)/.. -I $(DESERT_PATH)/nsmiracle-1.1.2/nsmiracle/ -I $(DESERT_PATH)/ns-2.34/common -I $(DESERT_PATH)/ns-2.34 -I $(DESERT_PATH)/tclcl-1.20 -I $(DESERT_PATH)/tcl-8.4.19/generic -I $(DESERT_PATH)/otcl-1.14 -I $(DESERT_PATH)/ns-2.34/mobile -I $(DESERT_PATH)/ns-2.34/trace -I $(DESERT_PATH)/ns-2.34/tcp -I $(DESERT_PATH)/ns-2.34/apps
 	ar crv $(BASE_DIR)/../.build/libmynb_p.a $(SIMPLE_RUNTIME_OBJS) $(BASE_DIR)/../.build/nb_desert_transport.o
 
+simple_mix: $(BUILD_DIR)/libmix.a
+
+$(BUILD_DIR)/libmix.a: executables $(SIMPLE_RUNTIME_OBJS) $(RUNTIME_DIR)/nb_mix_transport.cc
+	$(CXX) $(RCFLAGS) -c   $(RUNTIME_DIR)/nb_mix_transport.cc -o $(BUILD_DIR)/nb_mix_transport.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
+	ar crv $(BUILD_DIR)/libmix.a $(SIMPLE_RUNTIME_OBJS) $(BUILD_DIR)/nb_mix_transport.o
+
+.PHONY: simple_test_mix
+simple_test_mix: executables $(SIMPLE_RUNTIME_OBJS) $(BUILD_DIR)/libmix.a
+	$(CXX) $(RCFLAGS) -c $(TEST_DIR)/test_namespaces/client.cc -o $(BUILD_DIR)/test/simple_mix_test/client.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
+	$(CXX) $(SIMPLE_RUNTIME_OBJS) $(BUILD_DIR)/test/simple_mix_test/client.o $(BUILD_DIR)/libmix.a -o $(BUILD_DIR)/test/simple_mix_test/test
+
 simple_test_run: simple_test
 	$(BUILD_DIR)/test/simple_server &
 	sleep 1

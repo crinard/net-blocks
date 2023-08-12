@@ -40,6 +40,8 @@ char* nb__request_send_buffer(void);
 void nb__return_send_buffer(char*);
 void nb__desert_init(void* _m);
 void nb__desert_deinit(void);
+void nb__mix_init(void);
+void nb__mix_deinit(void);
 
 // Generated protocol API
 void nb__run_ingress_step(void*, int);
@@ -99,6 +101,8 @@ char* nb__request_send_buffer(void);
 void nb__return_send_buffer(char*);
 void nb__desert_init(void* _m);
 void nb__desert_deinit(void);
+void nb__mix_init(void);
+void nb__mix_deinit(void);
 
 // Generated protocol API
 void nb__run_ingress_step(void*, int);
