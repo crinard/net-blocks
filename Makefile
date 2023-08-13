@@ -29,6 +29,7 @@ $(shell mkdir -p $(BUILD_DIR)/test/simple_test)
 $(shell mkdir -p $(BUILD_DIR)/test/simple_test_accept)
 $(shell mkdir -p $(BUILD_DIR)/test/simple_test_inorder)
 $(shell mkdir -p $(BUILD_DIR)/test/simple_test_reliable)
+$(shell mkdir -p $(BUILD_DIR)/test/simple_test_mix)
 $(shell mkdir -p $(BUILD_DIR)/runtime/mlx5_impl)
 
 BUILDIT_LIBRARY_NAME=buildit
@@ -174,8 +175,8 @@ $(BUILD_DIR)/libmix.a: executables $(SIMPLE_RUNTIME_OBJS) $(RUNTIME_DIR)/nb_mix_
 
 .PHONY: simple_test_mix
 simple_test_mix: executables $(SIMPLE_RUNTIME_OBJS) $(BUILD_DIR)/libmix.a
-	$(CXX) $(RCFLAGS) -c $(TEST_DIR)/test_namespaces/client.cc -o $(BUILD_DIR)/test/simple_mix_test/client.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
-	$(CXX) $(SIMPLE_RUNTIME_OBJS) $(BUILD_DIR)/test/simple_mix_test/client.o $(BUILD_DIR)/libmix.a -o $(BUILD_DIR)/test/simple_mix_test/test
+	$(CXX) $(RCFLAGS) -c $(TEST_DIR)/test_namespaces/client.cc -o $(BUILD_DIR)/test/simple_test_mix/client.o -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
+	$(CXX) $(SIMPLE_RUNTIME_OBJS) $(BUILD_DIR)/test/simple_test_mix/client.o $(BUILD_DIR)/libmix.a -o $(BUILD_DIR)/test/simple_test_mix/test
 
 simple_test_run: simple_test
 	$(BUILD_DIR)/test/simple_server &
@@ -185,3 +186,4 @@ simple_test_run: simple_test
 
 clean:
 	rm -rf $(BUILD_DIR)
+	rm -rf $(SCRATCH_DIR)
