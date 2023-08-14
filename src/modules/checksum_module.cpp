@@ -21,26 +21,26 @@ void checksum_module::init_module(void) {
 }
 
 static builder::dyn_var<unsigned short> compute_checksum(packet_t _p) {
-  //   builder::dyn_var<char*> p = runtime::to_void_ptr(_p);
-  //   // Reset the checksum first
-  //   net_packet["checksum"]->set_integer(p, 0);
-  //   builder::dyn_var<int> so = get_headroom();
-  //   builder::dyn_var<int> eo =
-  //       net_packet["total_len"]->get_integer(p) + get_headroom();
+  builder::dyn_var<char*> p = runtime::to_void_ptr(_p);
+  // Reset the checksum first
+  net_packet["checksum"]->set_integer(p, 0);
+  builder::dyn_var<int> so = get_headroom();
+  builder::dyn_var<int> eo =
+      net_packet["total_len"]->get_integer(p) + get_headroom();
 
-  //   // Pad the bytes to be multiple of 2
-  //   //   if ((eo - so) % 2) {
-  //   //     p[eo] = 0;
-  //   //     eo = eo - 1;
-  //   //   }
+  // Pad the bytes to be multiple of 2 TODO: Why does this not cause segfault?
+  if ((eo - so) % 2) {
+    p[eo] = 0;
+    eo = eo - 1;
+  }
 
-  //   // Simple checksum by adding with wrap around
-  //   builder::dyn_var<unsigned short> checksum = 0;
-  //   for (builder::dyn_var<char*> ptr = p + so; ptr < p + eo; ptr = ptr + 2) {
-  //     builder::dyn_var<unsigned short*> pp = runtime::to_void_ptr(ptr);
-  //     checksum = checksum + pp[0];
-  //   }
-  return 1;
+  // Simple checksum by adding with wrap around
+  builder::dyn_var<unsigned short> checksum = 0;
+  for (builder::dyn_var<char*> ptr = p + so; ptr < p + eo; ptr = ptr + 2) {
+    builder::dyn_var<unsigned short*> pp = runtime::to_void_ptr(ptr);
+    checksum = checksum + pp[0];
+  }
+  return checksum;
 }
 
 module::hook_status checksum_module::hook_send(
@@ -60,10 +60,8 @@ module::hook_status checksum_module::hook_ingress(packet_t p) {
   // Put the old checksum back in case this packet has to be redelivered
   net_packet["checksum"]->set_integer(p, checksum_saved);
 
-  return module::hook_status::HOOK_CONTINUE;
-  //   if (checksum == checksum_saved) return
-  //   module::hook_status::HOOK_CONTINUE; return
-  //   module::hook_status::HOOK_DROP;
+  if (checksum == checksum_saved) return module::hook_status::HOOK_CONTINUE;
+  return module::hook_status::HOOK_DROP;
 }
 
 }  // namespace net_blocks
