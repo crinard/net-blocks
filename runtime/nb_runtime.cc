@@ -128,7 +128,7 @@ void nb__main_loop_step(void) {
 
   // Currently just processing one packet
   // TODO: Get the headroom value from the generated system
-  p = nb__poll_packet(&len, 20);
+  p = nb__poll_packet(&len, 12);
   for (int i = 0; i < len; i++) {
     printf("%x ", ((unsigned char*)p)[i]);
   }
@@ -274,7 +274,7 @@ void nb__main_loop_step(void) {
 
   // Currently just processing one packet
   // TODO: Get the headroom value from the generated system
-  p = nb__poll_packet(&len, 20);
+  p = nb__poll_packet(&len, 12);
   if (p != NULL) nb__run_ingress_step(p, len);
 
   nb__cycle_connections();

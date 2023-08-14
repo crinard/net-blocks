@@ -46,6 +46,7 @@ int main(int argc, char* argv[]) {
 
   while (running) {
     nb1::nb__send(conn1, CLIENT_MSG, sizeof(CLIENT_MSG));
+    nb2::nb__send(conn2, CLIENT_MSG, sizeof(CLIENT_MSG));
     nb1::nb__main_loop_step();
     nb2::nb__main_loop_step();
     usleep(100 * 1000);

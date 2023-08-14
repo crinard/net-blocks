@@ -79,11 +79,7 @@ static void generate_connection_layout(std::string fname, std::string name) {
   std::ofstream hoss(fname);
   hoss << "#pragma once" << std::endl;
   hoss << "#include \"nb_data_queue.h\"" << std::endl;
-  hoss << "namespace nb1 { " << std::endl;
-  conn_layout.generate_struct_decl(hoss, "nb__connection_t");
-  net_state.generate_struct_decl(hoss, "nb__net_state_t");
-  hoss << "}" << std::endl;
-  hoss << "namespace nb2 { " << std::endl;
+  hoss << "namespace " << name << " { " << std::endl;
   conn_layout.generate_struct_decl(hoss, "nb__connection_t");
   net_state.generate_struct_decl(hoss, "nb__net_state_t");
   hoss << "}" << std::endl;
@@ -120,7 +116,7 @@ int main(int argc, char* argv[]) {
 
   generate_connection_layout(argv[1], argv[2]);
 
-  generate_headers("nb1");
+  generate_headers(argv[2]);
 
   generate_net_init();
   generate_establish();
@@ -129,15 +125,15 @@ int main(int argc, char* argv[]) {
   generate_ingress_step();
 
   // reliable_module::instance.gen_timer_callback(std::cout);
-  std::cout << "}" << std::endl;
+  // std::cout << "}" << std::endl;
 
-  generate_headers("nb2");
+  // generate_headers("nb2");
 
-  generate_net_init();
-  generate_establish();
-  generate_destablish();
-  generate_send();
-  generate_ingress_step();
+  // generate_net_init();
+  // generate_establish();
+  // generate_destablish();
+  // generate_send();
+  // generate_ingress_step();
 
   // reliable_module::instance.gen_timer_callback(std::cout);
   std::cout << "}" << std::endl;

@@ -92,15 +92,19 @@ $(BUILD_DIR)/impls/simple: $(BUILD_DIR)/impls/simple.o $(LIBRARY)
 
 
 # Runtime objs
-$(SCRATCH_DIR)/nb_simple.cc: $(BUILD_DIR)/impls/simple
-	$(BUILD_DIR)/impls/simple $(SCRATCH_DIR)/gen_headers.h nb1 > $(SCRATCH_DIR)/nb_simple.cc
-	# $(BUILD_DIR)/impls/simple $(SCRATCH_DIR)/gen_headers.h nb2 > $(SCRATCH_DIR)/nb_simple.cc
+$(SCRATCH_DIR)/nb_simple1.cc: $(BUILD_DIR)/impls/simple
+	$(BUILD_DIR)/impls/simple $(SCRATCH_DIR)/gen_headers_nb1.h nb1 > $(SCRATCH_DIR)/nb_simple1.cc
 
-$(BUILD_DIR)/runtime/nb_simple.o: $(SCRATCH_DIR)/nb_simple.cc $(RUNTIME_INCLUDES)
-	$(CXX) $(RCFLAGS) -fpermissive   $(SCRATCH_DIR)/nb_simple.cc -o $(BUILD_DIR)/runtime/nb_simple.o -c -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
+$(SCRATCH_DIR)/nb_simple2.cc: $(BUILD_DIR)/impls/simple
+	$(BUILD_DIR)/impls/simple $(SCRATCH_DIR)/gen_headers_nb2.h nb2 > $(SCRATCH_DIR)/nb_simple2.cc
+	
+$(BUILD_DIR)/runtime/nb_simple1.o: $(SCRATCH_DIR)/nb_simple1.cc $(RUNTIME_INCLUDES)
+	$(CXX) $(RCFLAGS) -fpermissive   $(SCRATCH_DIR)/nb_simple1.cc -o $(BUILD_DIR)/runtime/nb_simple1.o -c -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
 
+$(BUILD_DIR)/runtime/nb_simple2.o: $(SCRATCH_DIR)/nb_simple2.cc $(RUNTIME_INCLUDES)
+	$(CXX) $(RCFLAGS) -fpermissive   $(SCRATCH_DIR)/nb_simple2.cc -o $(BUILD_DIR)/runtime/nb_simple2.o -c -I $(RUNTIME_DIR) -I $(SCRATCH_DIR)
 
-$(BUILD_DIR)/runtime/nb_runtime_simple.o: $(RUNTIME_DIR)/nb_runtime.cc $(RUNTIME_INCLUDES) $(SCRATCH_DIR)/nb_simple.cc
+$(BUILD_DIR)/runtime/nb_runtime_simple.o: $(RUNTIME_DIR)/nb_runtime.cc $(RUNTIME_INCLUDES) $(SCRATCH_DIR)/nb_simple1.cc $(SCRATCH_DIR)/nb_simple2.cc
 	$(CXX) $(RCFLAGS)   -fpermissive -o $@ $< -c -I $(SCRATCH_DIR) -I $(RUNTIME_DIR)
 
 
@@ -118,7 +122,7 @@ $(BUILD_DIR)/runtime/mlx5_impl/%.o: $(RUNTIME_DIR)/mlx5_impl/%.cc $(wildcard $(R
 mlx5_runtime: $(BUILD_DIR)/runtime/nb_mlx5_transport.o $(BUILD_DIR)/runtime/mlx5_impl/transport.o $(BUILD_DIR)/runtime/mlx5_impl/halloc.o
 	
 
-SIMPLE_RUNTIME_OBJS=$(BUILD_DIR)/runtime/nb_runtime_simple.o $(BUILD_DIR)/runtime/nb_simple.o $(BUILD_DIR)/runtime/nb_timer.o
+SIMPLE_RUNTIME_OBJS=$(BUILD_DIR)/runtime/nb_runtime_simple.o $(BUILD_DIR)/runtime/nb_simple1.o $(BUILD_DIR)/runtime/nb_simple2.o $(BUILD_DIR)/runtime/nb_timer.o
 
 	
 .PHONY: simple_network_test

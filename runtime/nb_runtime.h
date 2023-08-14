@@ -3,7 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "gen_headers.h"
+#include "gen_headers_nb1.h"
+#include "gen_headers_nb2.h"
 #include "nb_timer.h"
 extern unsigned long long nb__get_time_ms_now(void);
 
