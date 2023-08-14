@@ -18,15 +18,6 @@
 #include "scheduler.h"
 #define IPC_MTU 1024
 
-static char* tto_sent_data;
-static int tto_sent_data_len;
-static bool tto_busy = false;
-static char* ott_sent_data;
-static int ott_sent_data_len;
-static bool ott_busy = false;
-
-static std::queue<std::pair<char*, int>> tto_queue;
-static std::queue<std::pair<char*, int>> ott_queue;
 namespace nb1 {
 static Nb_pModule* m;
 
@@ -46,7 +37,6 @@ static size_t nb_ll_b_tx = 0;
 void nb__desert_init(void* _m) {
   // connect mode
   m = (Nb_pModule*)_m;
-  m->setRecvBufLen(0);
   nb_ll_b_tx = 0;
   nb_ll_p_tx = 0;
   nb_ll_b_rx = 0;
@@ -73,15 +63,14 @@ char nb__reuse_mtu_buffer[IPC_MTU];
  * @return char*
  */
 char* nb__poll_packet(int* size, int headroom) {
-  if (tto_busy) {
-    char* ret = (char*)malloc(IPC_MTU + headroom);
-    *size = tto_sent_data_len;
-    memcpy(ret + headroom, tto_sent_data, tto_sent_data_len);
-    tto_busy = false;
-    free(tto_sent_data);
-    return ret;
-  }
-  return NULL;
+  if (m->recvQ.empty()) return NULL;
+  char* ret = (char*)malloc(IPC_MTU + headroom);
+  Packet* p = m->recvQ.front();
+  *size = p->datalen();
+  memcpy(ret + headroom, p->accessdata(), p->datalen());
+  m->recvQ.pop();
+  Packet::free(p);
+  return ret;
 }
 
 static int uidcnt_ = 0;
@@ -94,32 +83,13 @@ static int send_cnt = 0;
  * @return int 0 or 1 always
  */
 int nb__send_packet(char* buff, int len) {
-  char* tmp = (char*)malloc(len);
-  memcpy(tmp, buff, len);
-  ott_queue.push(std::make_pair(tmp, len));
-  // Add to queue & return
-  if (ott_busy) return 0;
-  ott_busy = true;
-  std::pair<char*, int> pa = ott_queue.front();
-  ott_queue.pop();
-  ott_sent_data = pa.first;
-  int l = pa.second;
-  ott_sent_data_len = l;
-
-  // DESERT shenanigans
-  Packet* p = Packet::alloc(l);
+  Packet* p = Packet::alloc(len);
   hdr_cmn* ch = hdr_cmn::access(p);
   ch->uid() = uidcnt_++;
   ch->ptype() = 2;  // CBR style header Fwiw.
-  ch->size() = sizeof(hdr_cmn) + l;
-
+  ch->size() = sizeof(hdr_cmn) + len;
   unsigned char* pktdata_p = p->accessdata();
-  memcpy((char*)pktdata_p, ott_sent_data, l);
-  assert(l == p->datalen());
-  m->senddown(p, 0);
-  nb_ll_b_tx += l;
-  nb_ll_p_tx++;
-  return 0;
+  memcpy((char*)pktdata_p, buff, len);
 }
 }  // namespace nb1
 
@@ -143,7 +113,6 @@ static size_t nb_ll_b_tx = 0;
 void nb__desert_init(void* _m) {
   // connect mode
   m = (Nb_pModule*)_m;
-  m->setRecvBufLen(0);
   nb_ll_b_tx = 0;
   nb_ll_p_tx = 0;
   nb_ll_b_rx = 0;
@@ -170,15 +139,14 @@ char nb__reuse_mtu_buffer[IPC_MTU];
  * @return char*
  */
 char* nb__poll_packet(int* size, int headroom) {
-  if (ott_busy) {
-    char* ret = (char*)malloc(IPC_MTU + headroom);
-    *size = ott_sent_data_len;
-    memcpy(ret + headroom, ott_sent_data, ott_sent_data_len);
-    ott_busy = false;
-    free(ott_sent_data);
-    return ret;
-  }
-  return NULL;
+  if (m->recvQ.empty()) return NULL;
+  char* ret = (char*)malloc(IPC_MTU + headroom);
+  Packet* p = m->recvQ.front();
+  *size = p->datalen();
+  memcpy(ret + headroom, p->accessdata(), p->datalen());
+  m->recvQ.pop();
+  Packet::free(p);
+  return ret;
 }
 
 static int uidcnt_ = 0;
@@ -191,31 +159,16 @@ static int send_cnt = 0;
  * @return int 0 or 1 always
  */
 int nb__send_packet(char* buff, int len) {
-  char* tmp = (char*)malloc(len);
-  memcpy(tmp, buff, len);
-  tto_queue.push(std::make_pair(tmp, len));
-  // Add to queue & return
-  if (tto_busy) return 0;
-  tto_busy = true;
-  std::pair<char*, int> pa = tto_queue.front();
-  tto_queue.pop();
-  tto_sent_data = pa.first;
-  int l = pa.second;
-  tto_sent_data_len = l;
-
   // DESERT shenanigans
-  Packet* p = Packet::alloc(l);
+  Packet* p = Packet::alloc(len);
   hdr_cmn* ch = hdr_cmn::access(p);
   ch->uid() = uidcnt_++;
   ch->ptype() = 2;  // CBR style header Fwiw.
-  ch->size() = sizeof(hdr_cmn) + l;
-
+  ch->size() = sizeof(hdr_cmn) + len;
   unsigned char* pktdata_p = p->accessdata();
-  memcpy((char*)pktdata_p, tto_sent_data, l);
-  assert(!memcmp((char*)pktdata_p, tto_sent_data, l));
-  assert(l == p->datalen());
+  memcpy((char*)pktdata_p, buff, len);
   m->senddown(p, 0);
-  nb_ll_b_tx += l;
+  nb_ll_b_tx += len;
   nb_ll_p_tx++;
   return 0;
 }
