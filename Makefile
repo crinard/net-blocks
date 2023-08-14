@@ -31,6 +31,8 @@ $(shell mkdir -p $(BUILD_DIR)/test/simple_test_inorder)
 $(shell mkdir -p $(BUILD_DIR)/test/simple_test_reliable)
 $(shell mkdir -p $(BUILD_DIR)/test/simple_test_mix)
 $(shell mkdir -p $(BUILD_DIR)/runtime/mlx5_impl)
+$(shell mkdir -p ../.build)
+
 
 BUILDIT_LIBRARY_NAME=buildit
 BUILDIT_LIBRARY_PATH=$(BUILDIT_DIR)/build
@@ -191,3 +193,5 @@ simple_test_run: simple_test
 clean:
 	rm -rf $(BUILD_DIR)
 	rm -rf $(SCRATCH_DIR)
+	rm -rf ../.build 
+	# above is desert only
