@@ -95,7 +95,6 @@ int nb__send_packet(char* buff, int len) {
 
 namespace nb2 {
 static Nb_pModule* m;
-
 int nb__desert_simulate_out_of_order = 0;
 int nb__desert_simulate_packet_drop = 0;
 static char out_of_order_store[IPC_MTU];
@@ -158,6 +157,7 @@ static int send_cnt = 0;
  * @return int 0 or 1 always
  */
 int nb__send_packet(char* buff, int len) {
+  // DESERT shenanigans
   Packet* p = Packet::alloc(len);
   hdr_cmn* ch = hdr_cmn::access(p);
   ch->uid() = uidcnt_++;
@@ -165,6 +165,10 @@ int nb__send_packet(char* buff, int len) {
   ch->size() = sizeof(hdr_cmn) + len;
   unsigned char* pktdata_p = p->accessdata();
   memcpy((char*)pktdata_p, buff, len);
+  m->senddown(p, 0);
+  nb_ll_b_tx += len;
+  nb_ll_p_tx++;
+  return 0;
 }
 
 char* nb__request_send_buffer(void) { return (char*)malloc(IPC_MTU); }
