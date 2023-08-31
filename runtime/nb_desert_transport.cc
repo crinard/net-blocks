@@ -95,8 +95,6 @@ int nb__send_packet(char* buff, int len) {
 
 namespace nb2 {
 static Nb_pModule* m;
-
-#define IPC_MTU (1024)
 int nb__desert_simulate_out_of_order = 0;
 int nb__desert_simulate_packet_drop = 0;
 static char out_of_order_store[IPC_MTU];
