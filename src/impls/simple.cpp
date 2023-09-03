@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
 
   payload_module::instance.init_module();
 
-  inorder_module::instance.configInorderStrategy(inorder_module::hold_forever);
+  inorder_module::instance.configInorderStrategy(inorder_module::no_inorder);
   // inorder_module::instance.configInorderStrategy(inorder_module::no_inorder);
   inorder_module::instance.init_module();
 
@@ -123,19 +123,6 @@ int main(int argc, char* argv[]) {
   generate_destablish();
   generate_send();
   generate_ingress_step();
-
-  // reliable_module::instance.gen_timer_callback(std::cout);
-  // std::cout << "}" << std::endl;
-
-  // generate_headers("nb2");
-
-  // generate_net_init();
-  // generate_establish();
-  // generate_destablish();
-  // generate_send();
-  // generate_ingress_step();
-
-  // reliable_module::instance.gen_timer_callback(std::cout);
   std::cout << "}" << std::endl;
   return 0;
 }

@@ -49,6 +49,7 @@ void nb__desert_deinit(void) {
           "Finish, nb nb_ll_p_tx = %i, nb_ll_b_tx = %lu, nb_ll_p_rx = %i, "
           "nb_ll_b_rx = %lu\n",
           nb_ll_p_tx, nb_ll_b_tx, nb_ll_p_rx, nb_ll_b_rx);
+  nb__destablish((nb1::nb__connection_t*)m->conn);
   return;
 }
 
@@ -70,6 +71,8 @@ char* nb__poll_packet(int* size, int headroom) {
   memcpy(ret + headroom, p->accessdata(), p->datalen());
   m->recvQ.pop();
   Packet::free(p);
+  nb_ll_b_rx += *size;
+  nb_ll_p_rx++;
   return ret;
 }
 
@@ -90,6 +93,9 @@ int nb__send_packet(char* buff, int len) {
   ch->size() = sizeof(hdr_cmn) + len;
   unsigned char* pktdata_p = p->accessdata();
   memcpy((char*)pktdata_p, buff, len);
+  m->senddown(p, 0);
+  nb_ll_b_tx += len;
+  nb_ll_p_tx++;
 }
 }  // namespace nb1
 
@@ -121,8 +127,8 @@ void nb__desert_init(void* _m) {
 void nb__desert_deinit(void) {
   fprintf(stdout,
           "Finish, nb nb_ll_p_tx = %i, nb_ll_b_tx = %lu, nb_ll_p_rx = %i, "
-          "nb_ll_b_rx = %lu\n",
-          nb_ll_p_tx, nb_ll_b_tx, nb_ll_p_rx, nb_ll_b_rx);
+          "nb_ll_b_rx = %lu, %i packets in queue\n",
+          nb_ll_p_tx, nb_ll_b_tx, nb_ll_p_rx, nb_ll_b_rx, m->recvQ.size());
   return;
 }
 
@@ -144,6 +150,8 @@ char* nb__poll_packet(int* size, int headroom) {
   memcpy(ret + headroom, p->accessdata(), p->datalen());
   m->recvQ.pop();
   Packet::free(p);
+  nb_ll_b_rx += *size;
+  nb_ll_p_rx++;
   return ret;
 }
 
