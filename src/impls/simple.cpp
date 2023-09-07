@@ -9,7 +9,7 @@
 #include "modules/interface_module.h"
 #include "modules/network_module.h"
 #include "modules/payload_module.h"
-// #include "modules/reliable_module.h"
+#include "modules/reliable_module.h"
 #include "modules/signaling_module.h"
 
 using namespace net_blocks;
@@ -96,12 +96,11 @@ int main(int argc, char* argv[]) {
   payload_module::instance.init_module();
 
   inorder_module::instance.configInorderStrategy(inorder_module::no_inorder);
-  // inorder_module::instance.configInorderStrategy(inorder_module::no_inorder);
   inorder_module::instance.init_module();
 
   signaling_module::instance.init_module();
 
-  // reliable_module::instance.init_module();
+  reliable_module::instance.init_module();
 
   identifier_module::instance.configFlowIdentifier(
       identifier_module::flow_identifier_t::src_dst_identifier);
@@ -123,6 +122,7 @@ int main(int argc, char* argv[]) {
   generate_destablish();
   generate_send();
   generate_ingress_step();
+  reliable_module::instance.gen_timer_callback(std::cout);
   std::cout << "}" << std::endl;
   return 0;
 }

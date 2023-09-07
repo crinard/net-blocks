@@ -18,6 +18,8 @@
 #include "scheduler.h"
 #define IPC_MTU 1024
 
+static int uidcnt_ = 0;
+
 namespace nb1 {
 static Nb_pModule* m;
 
@@ -76,7 +78,6 @@ char* nb__poll_packet(int* size, int headroom) {
   return ret;
 }
 
-static int uidcnt_ = 0;
 static int send_cnt = 0;
 /**
  * @brief Sends a packet down a layer
@@ -155,7 +156,6 @@ char* nb__poll_packet(int* size, int headroom) {
   return ret;
 }
 
-static int uidcnt_ = 0;
 static int send_cnt = 0;
 /**
  * @brief Sends a packet down a layer
