@@ -129,4 +129,5 @@ extern nb__net_state_t* nb__net_state;
 
 extern char nb__wildcard_host_identifier[];
 }  // namespace nb2
+int nb__get_time(void);
 #endif

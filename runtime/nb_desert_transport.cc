@@ -187,3 +187,4 @@ double nb__desert_get_time(void) {
   double t = Scheduler::instance().clock();
   return t;
 }
+int nb__get_time(void) { return (int)nb__desert_get_time(); }

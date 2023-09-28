@@ -118,10 +118,10 @@ static void nb__cycle_connections(void) {
 
 void nb__main_loop_step(void) {
   // nb__run_ingress_step();
-  struct timespec tv;
-  clock_gettime(CLOCK_MONOTONIC, &tv);
-  nb__time_now = tv.tv_sec * 1000 + tv.tv_nsec / 1000000;
-
+  // struct timespec tv;
+  // clock_gettime(CLOCK_MONOTONIC, &tv);
+  // nb__time_now = tv.tv_sec * 1000 + tv.tv_nsec / 1000000;
+  nb__time_now = nb__get_time_ms_now();
   int len = 0;
 
   // Something that is not NULL;
@@ -129,10 +129,7 @@ void nb__main_loop_step(void) {
 
   // Currently just processing one packet
   // TODO: Get the headroom value from the generated system
-  p = nb__poll_packet(&len, 20);
-  for (int i = 0; i < len; i++) {
-    printf("%x ", ((unsigned char*)p)[i]);
-  }
+  p = nb__poll_packet(&len, 12);
   if (p != NULL) nb__run_ingress_step(p, len);
 
   nb__cycle_connections();
@@ -265,9 +262,9 @@ static void nb__cycle_connections(void) {
 void nb__main_loop_step(void) {
   // nb__run_ingress_step();
   struct timespec tv;
-  clock_gettime(CLOCK_MONOTONIC, &tv);
-  nb__time_now = tv.tv_sec * 1000 + tv.tv_nsec / 1000000;
-
+  // clock_gettime(CLOCK_MONOTONIC, &tv);
+  // nb__time_now = tv.tv_sec * 1000 + tv.tv_nsec / 1000000;
+  nb__time_now = nb__get_time_ms_now();
   int len = 0;
 
   // Something that is not NULL;
@@ -275,7 +272,7 @@ void nb__main_loop_step(void) {
 
   // Currently just processing one packet
   // TODO: Get the headroom value from the generated system
-  p = nb__poll_packet(&len, 20);
+  p = nb__poll_packet(&len, 12);
   if (p != NULL) nb__run_ingress_step(p, len);
 
   nb__cycle_connections();
@@ -300,10 +297,11 @@ char nb__wildcard_host_identifier[HOST_IDENTIFIER_LEN] = {0};
 }  // namespace nb2
 
 unsigned long long nb__get_time_ms_now(void) {
-  if (nb__time_now == -1) {
-    struct timespec tv;
-    clock_gettime(CLOCK_MONOTONIC, &tv);
-    nb__time_now = tv.tv_sec * 1000 + tv.tv_nsec / 1000000;
-  }
-  return nb__time_now;
+  // if (nb__time_now == -1) {
+  //   struct timespec tv;
+  //   clock_gettime(CLOCK_MONOTONIC, &tv);
+  //   nb__time_now = tv.tv_sec * 1000 + tv.tv_nsec / 1000000;
+  // }
+  // return nb__time_now;
+  return nb__get_time();
 }
