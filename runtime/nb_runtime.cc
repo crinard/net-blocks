@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
+
 unsigned long long nb__time_now = -1;
 #define IPC_MTU 1024
 namespace nb1 {
@@ -128,7 +129,7 @@ void nb__main_loop_step(void) {
 
   // Currently just processing one packet
   // TODO: Get the headroom value from the generated system
-  p = nb__poll_packet(&len, 12);
+  p = nb__poll_packet(&len, 20);
   for (int i = 0; i < len; i++) {
     printf("%x ", ((unsigned char*)p)[i]);
   }
@@ -274,7 +275,7 @@ void nb__main_loop_step(void) {
 
   // Currently just processing one packet
   // TODO: Get the headroom value from the generated system
-  p = nb__poll_packet(&len, 12);
+  p = nb__poll_packet(&len, 20);
   if (p != NULL) nb__run_ingress_step(p, len);
 
   nb__cycle_connections();
